@@ -167,6 +167,7 @@ abstract class BaseLayout extends StatelessWidget {
         failedWidgetBuilder: (ExtendedImageState state) => _failedWidgetBuilder(index, state),
         completedWidgetBuilder: (state) => completedWidgetBuilderCallBack(index, state),
         animateOnlyWhenVisible: true,
+        enableAnime4KRestore: readSetting.enableAnime4KRestore.isTrue,
         maxBytes: readSetting.enableMaxImageKilobyte.isTrue ? readSetting.maxImageKilobyte.toInt() * 1024 : null,
       ),
     );
@@ -268,6 +269,7 @@ abstract class BaseLayout extends StatelessWidget {
             containerWidth: logic.readPageState.imageContainerSizes[index]?.width ?? logic.getPlaceHolderSize(index).width,
             containerHeight: logic.readPageState.imageContainerSizes[index]?.height ?? logic.getPlaceHolderSize(index).height,
             clearMemoryCacheWhenDispose: true,
+            enableAnime4KRestore: readSetting.enableAnime4KRestore.isTrue,
             loadingWidgetBuilder: () => _loadingWidgetBuilder(context, index),
             failedWidgetBuilder: (state) => _failedWidgetBuilderForLocalMode(index, state),
             completedWidgetBuilder: (state) => completedWidgetBuilderForLocalModeCallBack(index, state),
@@ -327,6 +329,7 @@ abstract class BaseLayout extends StatelessWidget {
         containerWidth: logic.readPageState.imageContainerSizes[index]?.width ?? logic.getPlaceHolderSize(index).width,
         containerHeight: logic.readPageState.imageContainerSizes[index]?.height ?? logic.getPlaceHolderSize(index).height,
         clearMemoryCacheWhenDispose: true,
+        enableAnime4KRestore: readSetting.enableAnime4KRestore.isTrue,
         downloadingWidgetBuilder: () => _downloadingWidgetBuilder(index),
         pausedWidgetBuilder: () => _pausedWidgetBuilder(index),
         loadingWidgetBuilder: () => _loadingWidgetBuilder(context, index),

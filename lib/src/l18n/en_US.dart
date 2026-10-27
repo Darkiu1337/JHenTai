@@ -552,6 +552,8 @@ class en_US {
       'enablePageTurnAnime': 'Enable Turn Page Animation',
       'enableDoubleTapToScaleUp': 'Enable Double Tap to Scale up',
       'enableTapDragToScaleUp': 'Enable Tap Drag to Scale up',
+      'enableAnime4KRestore': 'Anime4K Restore L',
+      'enableAnime4KRestoreHint': 'Restore image detail with the Anime4K CNN shader (experimental, slower on large images)',
       'enableBottomMenu': 'Enable Bottom Menu',
       'disableGestureWhenScrolling': 'Disable Gesture When Scrolling',
       'turnPageMode': 'Turn Page Mode',

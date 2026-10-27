@@ -47,6 +47,7 @@ class SettingReadPage extends StatelessWidget {
                   _buildEnablePageTurnAnime().center(),
                   _buildEnableDoubleTapToScaleUp().center(),
                   _buildEnableTapDragToScaleUp().center(),
+                  _buildEnableAnime4KRestore().center(),
                   _buildEnableBottomMenu().center(),
                   _buildTapZoneStyle(context).center(),
                   _buildEnableImageMaxKilobytes().center(),
@@ -237,6 +238,17 @@ class SettingReadPage extends StatelessWidget {
       title: Text('enableTapDragToScaleUp'.tr),
       value: readSetting.enableTapDragToScaleUp.value,
       onChanged: readSetting.saveEnableTapDragToScaleUp,
+    );
+  }
+
+  Widget _buildEnableAnime4KRestore() {
+    return SwitchListTile(
+      title: Text('enableAnime4KRestore'.tr),
+      subtitle: Text('enableAnime4KRestoreHint'.tr),
+      value: readSetting.enableAnime4KRestore.value,
+      onChanged: (bool value) {
+        readSetting.saveEnableAnime4KRestore(value);
+      },
     );
   }
 

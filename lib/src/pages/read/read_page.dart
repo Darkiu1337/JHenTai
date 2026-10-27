@@ -22,6 +22,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../config/ui_config.dart';
 import '../../service/gallery_download/gallery_download_service.dart';
+import '../../service/log.dart';
 import '../../setting/keyboard_shortcut_setting.dart';
 import '../../setting/read_setting.dart';
 import '../../utils/route_util.dart';
@@ -48,6 +49,12 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
 
   @override
   ScrollStatusListerState get scrollStatusListerState => state;
+
+  @override
+  void initState() {
+    super.initState();
+    log.info('ReadPage opened');
+  }
 
   @override
   Brightness? get titleBarBrightness => Brightness.dark;

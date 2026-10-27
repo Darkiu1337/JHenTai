@@ -2,6 +2,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/config/ui_config.dart';
+import 'package:jhentai/src/service/log.dart';
 import 'package:jhentai/src/widget/eh_image.dart';
 
 class SingleImagePage extends StatelessWidget {
@@ -9,6 +10,7 @@ class SingleImagePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log.info('SingleImagePage opened');
     return ExtendedImageSlidePage(
       resetPageDuration: const Duration(milliseconds: 200),
       slidePageBackgroundHandler: (Offset offset, Size pageSize) => UIConfig.backGroundColor(context),

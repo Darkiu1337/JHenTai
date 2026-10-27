@@ -23,6 +23,7 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   RxBool enablePageTurnAnime = true.obs;
   RxBool enableDoubleTapToScaleUp = false.obs;
   RxBool enableTapDragToScaleUp = false.obs;
+  RxBool enableAnime4KRestore = false.obs;
   RxBool enableBottomMenu = false.obs;
   Rx<DeviceDirection> deviceDirection = DeviceDirection.followSystem.obs;
   Rx<ReadDirection> readDirection = GetPlatform.isMobile ? ReadDirection.top2bottomList.obs : ReadDirection.left2rightList.obs;
@@ -137,8 +138,9 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
     enablePageTurnAnime.value = map['enablePageTurnAnime'];
     enableDoubleTapToScaleUp.value = map['enableDoubleTapToScaleUp'] ?? enableDoubleTapToScaleUp.value;
     enableTapDragToScaleUp.value = map['enableTapDragToScaleUp'] ?? enableTapDragToScaleUp.value;
+    enableAnime4KRestore.value = map['enableAnime4KRestore'] ?? enableAnime4KRestore.value;
     enableBottomMenu.value = map['enableBottomMenu'] ?? enableBottomMenu.value;
-    autoModeInterval.value = map['autoModeInterval'] ?? autoModeInterval.value;
+    autoModeInterval.value = (map['autoModeInterval'] as num?)?.toDouble() ?? autoModeInterval.value;
     autoModeStyle.value = AutoModeStyle.values[map['autoModeStyle'] ?? AutoModeStyle.scroll.index];
     deviceDirection.value = DeviceDirection.values[map['deviceDirection'] ?? DeviceDirection.followSystem.index];
     readDirection.value = ReadDirection.values[map['readDirection']];
@@ -182,6 +184,7 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
       'enablePageTurnAnime': enablePageTurnAnime.value,
       'enableDoubleTapToScaleUp': enableDoubleTapToScaleUp.value,
       'enableTapDragToScaleUp': enableTapDragToScaleUp.value,
+      'enableAnime4KRestore': enableAnime4KRestore.value,
       'enableBottomMenu': enableBottomMenu.value,
       'autoModeInterval': autoModeInterval.value,
       'autoModeStyle': autoModeStyle.value.index,
@@ -371,6 +374,12 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   Future<void> saveEnableTapDragToScaleUp(bool value) async {
     log.debug('saveEnableTapDragToScaleUp:$value');
     enableTapDragToScaleUp.value = value;
+    await saveBeanConfig();
+  }
+
+  Future<void> saveEnableAnime4KRestore(bool value) async {
+    log.debug('saveEnableAnime4KRestore:$value');
+    enableAnime4KRestore.value = value;
     await saveBeanConfig();
   }
 
