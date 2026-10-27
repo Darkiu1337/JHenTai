@@ -553,6 +553,8 @@ class pt_BR {
       'enablePageTurnAnime': 'Ativar animação de virada',
       'enableDoubleTapToScaleUp': 'Ativar toque duplo para aumentar a escala',
       'enableTapDragToScaleUp': 'Enable Tap Drag to Scale up',
+      'enableAnime4KRestore': 'Anime4K Restore L',
+      'enableAnime4KRestoreHint': 'Restaura detalhes da imagem com o shader CNN Anime4K (experimental, mais lento em imagens grandes)',
       'disableGestureWhenScrolling': 'Disable Gesture When Scrolling',
       'enableBottomMenu': 'Enable Bottom Menu',
       'turnPageMode': 'Modo de virar página',

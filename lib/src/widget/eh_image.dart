@@ -20,6 +20,7 @@ import 'dart:ui' as ui;
 
 import '../service/gallery_download/download_path_resolver.dart';
 import '../service/gallery_download/gallery_download_service.dart';
+import 'anime4k_restored_image.dart';
 
 typedef LoadingProgressWidgetBuilder = Widget Function(double);
 typedef FailedWidgetBuilder = Widget Function(ExtendedImageState state);
@@ -57,6 +58,10 @@ class EHImage extends StatefulWidget {
   /// alive by the scroll cache extent.
   final bool animateOnlyWhenVisible;
 
+  /// Whether the decoded image should be passed through the Anime4K Restore L
+  /// shader chain before being displayed.
+  final bool enableAnime4KRestore;
+
   const EHImage({
     Key? key,
     required this.galleryImage,
@@ -74,6 +79,7 @@ class EHImage extends StatefulWidget {
     this.maxBytes,
     this.disableAnimation = false,
     this.animateOnlyWhenVisible = false,
+    this.enableAnime4KRestore = false,
     this.loadingProgressWidgetBuilder,
     this.failedWidgetBuilder,
     this.downloadingWidgetBuilder,
@@ -99,6 +105,7 @@ class EHImage extends StatefulWidget {
     this.maxBytes,
     this.disableAnimation = false,
     this.animateOnlyWhenVisible = false,
+    this.enableAnime4KRestore = false,
     this.loadingProgressWidgetBuilder,
     this.failedWidgetBuilder,
     this.downloadingWidgetBuilder,
@@ -235,6 +242,7 @@ class _EHImageState extends State<EHImage> {
             state.returnLoadStateChangedWidget = true;
 
             Widget child = widget.completedWidgetBuilder?.call(state) ?? _buildExtendedRawImage(state);
+            child = _maybeWrapWithAnime4K(child, state);
 
             if (widget.borderRadius != BorderRadius.zero) {
               child = ClipRRect(child: child, borderRadius: widget.borderRadius);
@@ -302,6 +310,7 @@ class _EHImageState extends State<EHImage> {
             state.returnLoadStateChangedWidget = true;
 
             Widget child = widget.completedWidgetBuilder?.call(state) ?? _buildExtendedRawImage(state);
+            child = _maybeWrapWithAnime4K(child, state);
 
             child = ClipRRect(child: child, borderRadius: widget.borderRadius);
 
@@ -344,6 +353,27 @@ class _EHImageState extends State<EHImage> {
 
     Uri newUri = rawUri.replace(host: 'ehgt.org');
     return newUri.toString();
+  }
+
+  Widget _maybeWrapWithAnime4K(Widget child, ExtendedImageState state) {
+    if (!widget.enableAnime4KRestore || state.extendedImageInfo == null) {
+      return child;
+    }
+
+    final ui.Image image = state.extendedImageInfo!.image;
+    final FittedSizes fittedSizes = applyBoxFit(
+      widget.fit,
+      Size(image.width.toDouble(), image.height.toDouble()),
+      Size(widget.containerWidth ?? double.infinity, widget.containerHeight ?? double.infinity),
+    );
+
+    return Anime4KRestoredImage(
+      source: image,
+      width: fittedSizes.destination.width == 0 ? null : fittedSizes.destination.width,
+      height: fittedSizes.destination.height == 0 ? null : fittedSizes.destination.height,
+      fit: widget.fit,
+      scale: state.extendedImageInfo?.scale ?? 1.0,
+    );
   }
 
   Widget _buildExtendedRawImage(ExtendedImageState state) {

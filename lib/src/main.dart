@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import 'package:jhentai/src/routes/getx_router_observer.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/pages/home_page.dart';
 import 'package:jhentai/src/service/app_update_service.dart';
+import 'package:jhentai/src/service/anime4k_restore_service.dart';
 import 'package:jhentai/src/service/archive_download_service.dart';
 import 'package:jhentai/src/service/built_in_blocked_user_service.dart';
 import 'package:jhentai/src/service/cloud_service.dart';
@@ -124,6 +127,80 @@ void main(List<String> args) async {
   }
 
   runApp(const MyApp());
+
+  final int selftestImageIndex = args.indexOf('--anime4k-selftest-image');
+  if (args.contains('--anime4k-selftest') || selftestImageIndex >= 0) {
+    final String? imagePath =
+        selftestImageIndex >= 0 && args.length > selftestImageIndex + 1 ? args[selftestImageIndex + 1] : null;
+    unawaited(_runAnime4KSelfTest(imagePath: imagePath));
+  }
+}
+
+/// Diagnostic entry point: `jhentai.exe --anime4k-selftest` or
+/// `jhentai.exe --anime4k-selftest-image <path>`.
+///
+/// Runs the Restore L chain on a synthetic image or a real file and writes the
+/// input, the output and a status report to the Desktop. Used to verify the
+/// shader pipeline on a machine without rebuilding the whole read page flow.
+Future<void> _runAnime4KSelfTest({String? imagePath}) async {
+  const String outputDir = r'C:\Users\Duzk\Desktop';
+  final StringBuffer report = StringBuffer();
+
+  ui.Image? input;
+  try {
+    if (imagePath != null) {
+      final ui.Codec codec = await ui.instantiateImageCodec(File(imagePath).readAsBytesSync());
+      final ui.FrameInfo frame = await codec.getNextFrame();
+      input = frame.image;
+    } else {
+      const double size = 128;
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final ui.Canvas canvas = ui.Canvas(recorder);
+
+      /// Four coloured quadrants plus a white circle, so flips and colour
+      /// channel errors are obvious in the saved PNG.
+      canvas.drawRect(const ui.Rect.fromLTWH(0, 0, 64, 64), ui.Paint()..color = const ui.Color(0xFFFF0000));
+      canvas.drawRect(const ui.Rect.fromLTWH(64, 0, 64, 64), ui.Paint()..color = const ui.Color(0xFF00FF00));
+      canvas.drawRect(const ui.Rect.fromLTWH(0, 64, 64, 64), ui.Paint()..color = const ui.Color(0xFF0000FF));
+      canvas.drawRect(const ui.Rect.fromLTWH(64, 64, 64, 64), ui.Paint()..color = const ui.Color(0xFFFFFF00));
+      canvas.drawCircle(const ui.Offset(64, 64), 20, ui.Paint()..color = const ui.Color(0xFFFFFFFF));
+
+      final ui.Picture picture = recorder.endRecording();
+      input = picture.toImageSync(size.toInt(), size.toInt());
+      picture.dispose();
+    }
+
+    report.writeln('INPUT=${input.width}x${input.height}');
+    await _writePng(input, '$outputDir\\anime4k_selftest_input.png');
+
+    final Stopwatch stopwatch = Stopwatch()..start();
+    final ui.Image? output = await anime4KRestoreService.restore(input);
+    stopwatch.stop();
+
+    if (output == null) {
+      report.writeln('RESULT=null');
+    } else {
+      await _writePng(output, '$outputDir\\anime4k_selftest_output.png');
+      report.writeln('RESULT=ok');
+      report.writeln('SIZE=${output.width}x${output.height}');
+      output.dispose();
+    }
+
+    report.writeln('MS=${stopwatch.elapsedMilliseconds}');
+  } catch (e, s) {
+    report.writeln('ERROR=$e\n$s');
+  } finally {
+    input?.dispose();
+  }
+
+  File('$outputDir\\anime4k_selftest.txt').writeAsStringSync(report.toString());
+}
+
+Future<void> _writePng(ui.Image image, String path) async {
+  final data = await image.toByteData(format: ui.ImageByteFormat.png);
+  if (data != null) {
+    File(path).writeAsBytesSync(data.buffer.asUint8List());
+  }
 }
 
 class MyApp extends StatelessWidget {
