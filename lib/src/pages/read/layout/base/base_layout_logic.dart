@@ -20,6 +20,7 @@ import 'package:jhentai/src/network/eh_request.dart';
 import 'package:jhentai/src/service/gallery_download/download_path_resolver.dart';
 import 'package:jhentai/src/service/gallery_download/eh_image_exception_matcher.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_download_service.dart';
+import 'package:jhentai/src/service/nomacs_stream_service.dart';
 import 'package:jhentai/src/service/path_service.dart';
 import 'package:jhentai/src/setting/download_setting.dart';
 import 'package:jhentai/src/setting/style_setting.dart';
@@ -145,6 +146,44 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     }
   }
 
+  /// Opens the gallery in the configured external viewer (nomacs).
+  ///
+  /// Online galleries are streamed page by page into a temporary folder, so
+  /// nomacs can keep navigating without going back to JHenTai. Already
+  /// downloaded/archive/local galleries are opened from their existing folder.
+  Future<void> openInNomacs(int index) async {
+    if (readPageState.readPageInfo.mode == ReadMode.online) {
+      await nomacsStreamService.openOnlineGallery(
+        readPageInfo: readPageState.readPageInfo,
+        startIndex: index,
+        resolveImage: (i) => readPageLogic.resolveImageForNomacs(i),
+      );
+      return;
+    }
+
+    String? target;
+    if (readPageState.readPageInfo.mode == ReadMode.downloaded) {
+      String? relativePath = readPageState.images[index]?.path;
+      if (relativePath != null) {
+        target = dirname(DownloadPathResolver.computeImageDownloadAbsolutePathFromRelativePath(relativePath));
+      }
+    } else if (readPageState.readPageInfo.mode == ReadMode.archive) {
+      target = dirname(_getArchiveImageAbsolutePath(index));
+    } else {
+      String? absolutePath = readPageState.images[index]?.path;
+      if (absolutePath != null) {
+        target = dirname(absolutePath);
+      }
+    }
+
+    if (target == null || target.isEmpty) {
+      toast('failed'.tr);
+      return;
+    }
+
+    await nomacsStreamService.openLocalPath(target);
+  }
+
   /// Desktop right-click context menu for online images.
   Future<void> showOnlineDesktopContextMenu({required int index, required BuildContext context, required Offset position}) async {
     final selected = await showMenu<String>(
@@ -155,6 +194,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
         PopupMenuItem(value: 'reload', child: Text('reload'.tr)),
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
         PopupMenuItem(value: 'copy_eh_page_url', child: Text('copyEHPageUrl'.tr)),
+        PopupMenuItem(value: 'open_nomacs', child: Text('openInNomacs'.tr)),
         PopupMenuItem(value: 'save', child: Text('${'save'.tr}(${'resampleImage'.tr})')),
         if (readPageState.images[index]!.originalImageUrl != null && userSetting.hasLoggedIn())
           PopupMenuItem(value: 'save_original', child: Text('${'save'.tr}(${'originalImage'.tr})')),
@@ -171,6 +211,9 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
         break;
       case 'copy_eh_page_url':
         copyEHPageUrl(index);
+        break;
+      case 'open_nomacs':
+        await openInNomacs(index);
         break;
       case 'save':
         await saveOnlineImage(index);
@@ -216,6 +259,13 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
             onPressed: () async {
               backRoute();
               copyEHPageUrl(index);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: ehActionSheetText('openInNomacs'.tr),
+            onPressed: () async {
+              backRoute();
+              openInNomacs(index);
             },
           ),
           CupertinoActionSheetAction(
@@ -308,6 +358,13 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
             },
           ),
           CupertinoActionSheetAction(
+            child: ehActionSheetText('openInNomacs'.tr),
+            onPressed: () async {
+              backRoute();
+              openInNomacs(index);
+            },
+          ),
+          CupertinoActionSheetAction(
             child: ehActionSheetText('save'.tr),
             onPressed: () {
               backRoute();
@@ -352,6 +409,13 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
             },
           ),
           CupertinoActionSheetAction(
+            child: ehActionSheetText('openInNomacs'.tr),
+            onPressed: () async {
+              backRoute();
+              openInNomacs(index);
+            },
+          ),
+          CupertinoActionSheetAction(
             child: ehActionSheetText('save'.tr),
             onPressed: () {
               backRoute();
@@ -381,6 +445,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       items: [
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
         PopupMenuItem(value: 'copy_eh_page_url', child: Text('copyEHPageUrl'.tr)),
+        PopupMenuItem(value: 'open_nomacs', child: Text('openInNomacs'.tr)),
         PopupMenuItem(value: 'save', child: Text('save'.tr)),
         PopupMenuItem(value: 'redownload', child: Text('reDownload'.tr)),
         PopupMenuItem(value: 'open_read_setting', child: Text('setting'.tr)),
@@ -393,6 +458,9 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
         break;
       case 'copy_eh_page_url':
         copyEHPageUrl(index);
+        break;
+      case 'open_nomacs':
+        await openInNomacs(index);
         break;
       case 'save':
         saveDownloadedImageFile(index);
@@ -422,6 +490,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
       items: [
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
+        PopupMenuItem(value: 'open_nomacs', child: Text('openInNomacs'.tr)),
         PopupMenuItem(value: 'save', child: Text('save'.tr)),
         PopupMenuItem(value: 'open_read_setting', child: Text('setting'.tr)),
       ],
@@ -430,6 +499,9 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     switch (selected) {
       case 'copyImage':
         copyArchiveImageFile(index);
+        break;
+      case 'open_nomacs':
+        await openInNomacs(index);
         break;
       case 'save':
         saveArchiveImageFile(index);

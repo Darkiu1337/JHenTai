@@ -446,6 +446,60 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
     );
   }
 
+  /// Resolves the image URL for the external (nomacs) stream without mutating
+  /// the reader's parsed-image state for every page. The current page usually
+  /// comes straight from [state.images]. Later pages are parsed on demand.
+  Future<GalleryImage?> resolveImageForNomacs(int index) async {
+    if (index < 0 || index >= state.readPageInfo.pageCount) {
+      return null;
+    }
+
+    if (state.readPageInfo.mode != ReadMode.online) {
+      return state.images[index];
+    }
+
+    if (state.images[index] != null) {
+      return state.images[index];
+    }
+
+    if (state.thumbnails[index] == null) {
+      if (state.parseImageHrefsStates[index] != LoadingState.loading) {
+        await parseImageHref(index);
+      }
+
+      /// parseImageHref may re-schedule itself when the gallery's thumbnails
+      /// per page differs from the cached setting. Wait for that pass too.
+      int waited = 0;
+      while (state.thumbnails[index] == null && waited < 100) {
+        if (state.parseImageHrefsStates[index] == LoadingState.error) {
+          return null;
+        }
+        await Future.delayed(const Duration(milliseconds: 50));
+        waited++;
+      }
+    }
+
+    if (state.thumbnails[index] == null) {
+      return null;
+    }
+
+    try {
+      return await retry(
+        () => requestImage(index, false, null),
+        maxAttempts: 3,
+        retryIf: (e) => e is DioException,
+        onRetry: (e) => log.error('Resolve image for nomacs failed, index: $index', (e as DioException).errorMsg),
+      );
+    } catch (e) {
+      log.error('Resolve image for nomacs failed, index: $index', e);
+      return null;
+    }
+  }
+
+  Future<void> openInNomacs() {
+    return layoutLogic.openInNomacs(state.readPageInfo.currentImageIndex);
+  }
+
   Future<void> reloadImage(int index) async {
     String? reloadKey;
     if (state.images[index] != null) {
