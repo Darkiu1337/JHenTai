@@ -60,6 +60,50 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
 
   @override
   Widget build(BuildContext context) {
+    final Map<LogicalKeyboardKey, VoidCallback> baseKeyHandlers = {
+      LogicalKeyboardKey.escape: backRoute,
+      ...keyboardShortcutSetting.buildHandlerMap(
+        onToNext: logic.toNext,
+        onToPrev: logic.toPrev,
+        onToLeft: logic.toLeft,
+        onToRight: logic.toRight,
+        onBack: backRoute,
+        onToggleMenu: logic.toggleMenu,
+        onToggleFirstPageAlone: logic.handleM,
+        onToggleFullScreen: toggleFullScreen,
+      ),
+    };
+
+    final VoidCallback? configuredLeft = baseKeyHandlers[LogicalKeyboardKey.arrowLeft];
+    final VoidCallback? configuredRight = baseKeyHandlers[LogicalKeyboardKey.arrowRight];
+
+    final Map<LogicalKeyboardKey, VoidCallback> keyHandlers = <LogicalKeyboardKey, VoidCallback>{
+      ...baseKeyHandlers,
+      // Arrow keys pan the image while it is zoomed. Outside zoom they keep
+      // their configured page-turn behaviour (left/right only, by default).
+      if (configuredLeft != null)
+        LogicalKeyboardKey.arrowLeft: () {
+          if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
+            logic.layoutLogic.panLeft();
+          } else {
+            configuredLeft!();
+          }
+        },
+      if (configuredRight != null)
+        LogicalKeyboardKey.arrowRight: () {
+          if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
+            logic.layoutLogic.panRight();
+          } else {
+            configuredRight!();
+          }
+        },
+    };
+
+    // Up/down have no default binding. Only add pan handlers when the user has
+    // not mapped those keys to something else.
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.arrowUp, () => logic.handleArrowUp);
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.arrowDown, () => logic.handleArrowDown);
+
     Widget child = AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         systemNavigationBarColor: Colors.transparent,
@@ -83,18 +127,10 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
           ),
           child: EHKeyboardListener(
             focusNode: state.focusNode,
-            keyHandlers: {
-              LogicalKeyboardKey.escape: backRoute,
-              ...keyboardShortcutSetting.buildHandlerMap(
-                onToNext: logic.toNext,
-                onToPrev: logic.toPrev,
-                onToLeft: logic.toLeft,
-                onToRight: logic.toRight,
-                onBack: backRoute,
-                onToggleMenu: logic.toggleMenu,
-                onToggleFirstPageAlone: logic.handleM,
-                onToggleFullScreen: toggleFullScreen,
-              ),
+            keyHandlers: keyHandlers,
+            repeatableKeys: <LogicalKeyboardKey>{
+              LogicalKeyboardKey.arrowUp,
+              LogicalKeyboardKey.arrowDown,
             },
             child: DefaultTextStyle(
               style: DefaultTextStyle.of(context).style.copyWith(

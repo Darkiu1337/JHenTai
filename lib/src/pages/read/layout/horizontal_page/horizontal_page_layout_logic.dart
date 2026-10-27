@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/setting/read_setting.dart';
+import 'package:photo_view/photo_view.dart';
 
 import '../base/base_layout_logic.dart';
 import 'horizontal_page_layout_state.dart';
@@ -12,6 +13,20 @@ class HorizontalPageLayoutLogic extends BaseLayoutLogic {
   HorizontalPageLayoutState state = HorizontalPageLayoutState();
 
   late PageController pageController;
+
+  int _lastPage = -1;
+
+  int get currentPageIndex {
+    final int fallback = readPageState.readPageInfo.initialIndex;
+    final int index = pageController.hasClients && pageController.page != null ? pageController.page!.round() : fallback;
+    return index.clamp(0, readPageState.readPageInfo.pageCount - 1).toInt();
+  }
+
+  @override
+  PhotoViewControllerBase? get activePhotoViewController => state.photoViewControllerOf(currentPageIndex);
+
+  @override
+  Size? get activeContentSize => readPageState.imageContainerSizes[currentPageIndex];
 
   @override
   void onInit() {
@@ -104,8 +119,48 @@ class HorizontalPageLayoutLogic extends BaseLayoutLogic {
   }
 
   void _readProgressListener() {
+    if (!pageController.hasClients || pageController.page == null) {
+      return;
+    }
+
     int currentPage = pageController.page!.toInt();
     readPageLogic.recordReadProgress(currentPage);
     readPageLogic.syncThumbnails(currentPage);
+
+    if (currentPage == _lastPage) {
+      return;
+    }
+
+    final int? previousPage = _lastPage >= 0 ? _lastPage : null;
+    _lastPage = currentPage;
+    _copyZoomAndAlignToTop(previousPage, currentPage);
+  }
+
+  /// Keeps the zoom level of the page the reader is leaving and starts the new
+  /// page at its top edge.
+  void _copyZoomAndAlignToTop(int? previousPage, int currentPage) {
+    final double scale = previousPage == null ? 1.0 : (state.photoViewControllerOf(previousPage).scale ?? 1.0);
+    final Size? contentSize = readPageState.imageContainerSizes[currentPage];
+    final Offset position = scale > 1.001 ? computeTopAlignedPosition(scale, contentSize) : Offset.zero;
+
+    final PhotoViewController controller = state.photoViewControllerOf(currentPage);
+    final PhotoViewScaleStateController scaleStateController = state.photoViewScaleStateControllerOf(currentPage);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_lastPage != currentPage) {
+        return;
+      }
+      controller.updateMultiple(scale: scale, position: position);
+      scaleStateController.setInvisibly(scale > 1.001 ? PhotoViewScaleState.zoomedIn : PhotoViewScaleState.initial);
+
+      // Fit-width pages scroll vertically inside the page; start the new page
+      // at the top of the image too.
+      if (readPageLogic.isInFitWidthReadDirection) {
+        final ScrollController scrollController = state.scrollControllerOf(currentPage);
+        if (scrollController.hasClients) {
+          scrollController.jumpTo(0);
+        }
+      }
+    });
   }
 }

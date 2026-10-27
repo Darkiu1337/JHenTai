@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../../../setting/read_setting.dart';
@@ -13,6 +14,24 @@ import 'horizontal_list_layout_state.dart';
 
 class HorizontalListLayoutLogic extends BaseLayoutLogic {
   HorizontalListLayoutState state = HorizontalListLayoutState();
+
+  int _lastImageIndex = -1;
+
+  @override
+  PhotoViewControllerBase? get activePhotoViewController => state.photoViewController;
+
+  /// In horizontal list mode the leading edge of the new item is placed at the
+  /// start of the viewport. Shifting the zoomed list by half of the extra size
+  /// brings that edge back to the top-left (or top-right for right-to-left).
+  @override
+  Offset computeTopAlignedPosition(double scale, Size? contentSize) {
+    final Size viewport = readPageState.displayRegionSize;
+    final double xSign = readPageLogic.isInRight2LeftDirection ? -1 : 1;
+    return Offset(
+      xSign * viewport.width * (scale - 1) / 2,
+      viewport.height * (scale - 1) / 2,
+    );
+  }
 
   @override
   void onInit() {
@@ -217,6 +236,13 @@ class HorizontalListLayoutLogic extends BaseLayoutLogic {
 
     readPageLogic.recordReadProgress(firstImageIndex);
     readPageLogic.syncThumbnails(firstImageIndex);
+
+    if (firstImageIndex == _lastImageIndex) {
+      return;
+    }
+
+    _lastImageIndex = firstImageIndex;
+    scheduleAlignToTop();
   }
 
   @override

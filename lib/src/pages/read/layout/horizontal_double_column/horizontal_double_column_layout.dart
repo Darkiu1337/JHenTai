@@ -39,6 +39,8 @@ class HorizontalDoubleColumnLayout extends BaseLayout {
               reverse: logic.readPageLogic.isInRight2LeftDirection,
               itemCount: state.pageCount,
               builder: (context, index) => PhotoViewGalleryPageOptions.customChild(
+                controller: state.photoViewControllerOf(index),
+                scaleStateController: state.photoViewScaleStateControllerOf(index),
                 initialScale: 1.0,
                 minScale: 1.0,
                 maxScale: 2.5,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
@@ -7,6 +8,7 @@ import 'package:jhentai/src/enum/config_enum.dart';
 import 'package:jhentai/src/extension/get_logic_extension.dart';
 import 'package:jhentai/src/service/local_config_service.dart';
 import 'package:jhentai/src/utils/screen_size_util.dart';
+import 'package:photo_view/photo_view.dart';
 
 import '../../../../service/gallery_download/gallery_download_service.dart';
 import '../../../../setting/read_setting.dart';
@@ -17,6 +19,47 @@ class HorizontalDoubleColumnLayoutLogic extends BaseLayoutLogic {
   HorizontalDoubleColumnLayoutState state = HorizontalDoubleColumnLayoutState();
 
   Completer<void> initCompleter = Completer<void>();
+
+  int _lastPage = -1;
+
+  int get currentPageIndex {
+    if (!initCompleter.isCompleted) {
+      return 0;
+    }
+    final int fallback = computePageIndexOfImage(readPageState.readPageInfo.initialIndex);
+    final int index = state.pageController.hasClients && state.pageController.page != null ? state.pageController.page!.round() : fallback;
+    return index.clamp(0, state.pageCount - 1).toInt();
+  }
+
+  @override
+  PhotoViewControllerBase? get activePhotoViewController => state.photoViewControllerOf(currentPageIndex);
+
+  @override
+  Size? get activeContentSize => initCompleter.isCompleted ? _contentSizeForPage(currentPageIndex) : null;
+
+  Size? _contentSizeForPage(int pageIndex) {
+    final List<int> images = computeImagesInPageIndex(pageIndex);
+    if (images.isEmpty) {
+      return null;
+    }
+
+    double width = 0;
+    double height = 0;
+    for (final int imageIndex in images) {
+      final Size? size = readPageState.imageContainerSizes[imageIndex];
+      if (size == null) {
+        return null;
+      }
+      width += size.width;
+      height = max(height, size.height);
+    }
+
+    if (images.length > 1) {
+      width += readSetting.imageSpace.value;
+    }
+
+    return Size(width, height);
+  }
 
   @override
   Future<void> onInit() async {
@@ -147,10 +190,45 @@ class HorizontalDoubleColumnLayoutLogic extends BaseLayoutLogic {
   }
 
   void _readProgressListener() {
+    if (!state.pageController.hasClients || state.pageController.page == null) {
+      return;
+    }
+
     int currentPage = state.pageController.page!.toInt();
     List<int> imageIndexes = computeImagesInPageIndex(currentPage);
+    if (imageIndexes.isEmpty) {
+      return;
+    }
+
     readPageLogic.recordReadProgress(imageIndexes.first);
     readPageLogic.syncThumbnails(imageIndexes.first);
+
+    if (currentPage == _lastPage) {
+      return;
+    }
+
+    final int? previousPage = _lastPage >= 0 ? _lastPage : null;
+    _lastPage = currentPage;
+    _copyZoomAndAlignToTop(previousPage, currentPage);
+  }
+
+  /// Keeps the zoom level of the page the reader is leaving and starts the new
+  /// page at its top edge.
+  void _copyZoomAndAlignToTop(int? previousPage, int currentPage) {
+    final double scale = previousPage == null ? 1.0 : (state.photoViewControllerOf(previousPage).scale ?? 1.0);
+    final Size? contentSize = _contentSizeForPage(currentPage);
+    final Offset position = scale > 1.001 ? computeTopAlignedPosition(scale, contentSize) : Offset.zero;
+
+    final PhotoViewController controller = state.photoViewControllerOf(currentPage);
+    final PhotoViewScaleStateController scaleStateController = state.photoViewScaleStateControllerOf(currentPage);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_lastPage != currentPage) {
+        return;
+      }
+      controller.updateMultiple(scale: scale, position: position);
+      scaleStateController.setInvisibly(scale > 1.001 ? PhotoViewScaleState.zoomedIn : PhotoViewScaleState.initial);
+    });
   }
 
   @override

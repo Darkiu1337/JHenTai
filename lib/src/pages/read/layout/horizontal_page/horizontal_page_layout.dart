@@ -31,6 +31,8 @@ class HorizontalPageLayout extends BaseLayout {
             : readSetting.preloadPageCountLocal.value.toDouble(),
         reverse: logic.readPageLogic.isInRight2LeftDirection,
         builder: (context, index) => PhotoViewGalleryPageOptions.customChild(
+          controller: state.photoViewControllerOf(index),
+          scaleStateController: state.photoViewScaleStateControllerOf(index),
           initialScale: 1.0,
           minScale: 1.0,
           maxScale: 2.5,
@@ -40,7 +42,7 @@ class HorizontalPageLayout extends BaseLayout {
             Widget item = readPageState.readPageInfo.mode == ReadMode.online ? buildItemInOnlineMode(context, index) : buildItemInLocalMode(context, index);
 
             if (logic.readPageLogic.isInFitWidthReadDirection) {
-              item = Center(child: SingleChildScrollView(controller: ScrollController(), child: item));
+              item = Center(child: SingleChildScrollView(controller: state.scrollControllerOf(index), child: item));
             }
 
             return item;

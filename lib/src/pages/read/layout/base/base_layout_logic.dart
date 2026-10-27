@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:clipboard/clipboard.dart';
 import 'package:dio/dio.dart';
@@ -52,6 +53,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   final ReadPageState readPageState = Get.find<ReadPageLogic>().state;
 
   Timer? autoModeTimer;
+  Timer? alignToTopTimer;
   Worker? doubleTapGestureSwitcherListener;
   Worker? tapDragGestureSwitcherListener;
   Worker? showScrollBarListener;
@@ -67,6 +69,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   @override
   void onClose() {
     autoModeTimer?.cancel();
+    alignToTopTimer?.cancel();
     doubleTapGestureSwitcherListener?.dispose();
     tapDragGestureSwitcherListener?.dispose();
     showScrollBarListener?.dispose();
@@ -111,6 +114,82 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       default:
         return PhotoViewScaleState.initial;
     }
+  }
+
+  /// Whether horizontal arrow keys should pan the zoomed content instead of
+  /// turning the page. Page layouts and horizontal lists pan; the vertical
+  /// list keeps left/right for page turns.
+  bool get panHorizontallyWhenZoomed => true;
+
+  /// Controller of the content currently visible in the viewport.
+  ///
+  /// Page layouts return the controller of the current page, list layouts
+  /// return their single controller.
+  PhotoViewControllerBase? get activePhotoViewController => null;
+
+  /// Size of the visible content at scale 1.0, when the layout can compute it.
+  Size? get activeContentSize => null;
+
+  double get activeScale => activePhotoViewController?.scale ?? 1.0;
+
+  bool get isZoomed => activeScale > 1.001;
+
+  /// Distance covered by one arrow-key pan, proportional to the viewport.
+  Offset get panStep {
+    final Size region = readPageState.displayRegionSize;
+    return Offset(region.width * 0.08, region.height * 0.08);
+  }
+
+  void panBy(Offset delta) {
+    final PhotoViewControllerBase? controller = activePhotoViewController;
+    if (controller == null) {
+      return;
+    }
+
+    /// photo_view clamps the position against the current content boundaries
+    /// on every controller update, so just add the delta.
+    controller.updateMultiple(position: controller.position + delta);
+  }
+
+  void panUp() => panBy(Offset(0, -panStep.dy));
+
+  void panDown() => panBy(Offset(0, panStep.dy));
+
+  void panLeft() => panBy(Offset(-panStep.dx, 0));
+
+  void panRight() => panBy(Offset(panStep.dx, 0));
+
+  /// Position that puts the top edge of the visible content at the top of the
+  /// viewport without changing the current scale.
+  ///
+  /// photo_view scales around the center and then applies the controller
+  /// position as a screen-space translation, so a positive Y moves the content
+  /// down.
+  Offset computeTopAlignedPosition(double scale, Size? contentSize) {
+    final Size viewport = readPageState.displayRegionSize;
+    final double contentHeight = contentSize?.height ?? viewport.height;
+    final double maxY = max(0.0, (contentHeight * scale - viewport.height) / 2);
+    return Offset(0, maxY);
+  }
+
+  /// Re-applies the current scale while moving the content back to its top
+  /// edge. When not zoomed, the default centered position is restored.
+  void alignActiveContentToTop() {
+    final PhotoViewControllerBase? controller = activePhotoViewController;
+    if (controller == null) {
+      return;
+    }
+
+    final double scale = controller.scale ?? 1.0;
+    final Offset position = scale > 1.001 ? computeTopAlignedPosition(scale, activeContentSize) : Offset.zero;
+    controller.updateMultiple(position: position, scale: scale);
+  }
+
+  /// Debounced top alignment for scrolling layouts, where the visible image
+  /// changes many times during a single gesture.
+  void scheduleAlignToTop([Duration delay = const Duration(milliseconds: 200)]) {
+    alignToTopTimer?.cancel();
+    alignToTopTimer = Timer(delay, alignActiveContentToTop);
   }
 
   void toggleDisplayFirstPageAlone() {}

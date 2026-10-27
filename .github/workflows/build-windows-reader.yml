@@ -1,0 +1,53 @@
+name: Build Windows (reader)
+
+on:
+  push:
+    branches:
+      - reader-features
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      FLUTTER_VERSION: 3.44.8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'master'
+          cache: true
+
+      - name: Flutter pub get
+        run: |
+          git config --global core.longpaths true
+          flutter pub get
+
+      - name: Analyze
+        continue-on-error: true
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build Windows
+        run: flutter build windows -t lib/src/main.dart --release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*(.+)$').Matches[0].Groups[1].Value.Trim()
+          $DestDir = "build\windows\JHenTai_$version"
+          $SrcDir = "build\windows\x64\runner\Release"
+          New-Item -Path $DestDir -ItemType Directory -Force | Out-Null
+          Copy-Item $SrcDir\* -Recurse $DestDir
+          Get-ChildItem -Path windows -Filter *.dll -File -Recurse -ErrorAction SilentlyContinue | Copy-Item -Destination $DestDir -Force
+          Compress-Archive $DestDir "build\windows\JHenTai_${version}_Windows_reader.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JHenTai-Windows-reader
+          path: build/windows/*.zip
+          if-no-files-found: error

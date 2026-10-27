@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/extension/get_logic_extension.dart';
 import 'package:jhentai/src/pages/read/layout/vertical_list/vertical_list_layout_state.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../../../setting/read_setting.dart';
@@ -20,6 +21,23 @@ class VerticalListLayoutLogic extends BaseLayoutLogic {
   late Worker imageRegionWidthRatioListener;
   late Worker portraitImageRegionWidthRatioListener;
   late Worker landscapeImageRegionWidthRatioListener;
+
+  int _lastImageIndex = -1;
+
+  @override
+  bool get panHorizontallyWhenZoomed => false;
+
+  @override
+  PhotoViewControllerBase? get activePhotoViewController => state.photoViewController;
+
+  /// In list mode the visible image already sits at the top of the viewport,
+  /// so moving the zoomed list down by half of the extra height reveals the
+  /// top edge of the new image.
+  @override
+  Offset computeTopAlignedPosition(double scale, Size? contentSize) {
+    final Size viewport = readPageState.displayRegionSize;
+    return Offset(0, viewport.height * (scale - 1) / 2);
+  }
 
   @override
   void onInit() {
@@ -239,6 +257,13 @@ class VerticalListLayoutLogic extends BaseLayoutLogic {
 
     readPageLogic.recordReadProgress(firstImageIndex);
     readPageLogic.syncThumbnails(firstImageIndex);
+
+    if (firstImageIndex == _lastImageIndex) {
+      return;
+    }
+
+    _lastImageIndex = firstImageIndex;
+    scheduleAlignToTop();
   }
 
   double _getVisibleHeight() {

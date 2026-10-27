@@ -721,6 +721,20 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
     layoutLogic.toNext();
   }
 
+  /// Arrow up pans the visible image when it is zoomed.
+  void handleArrowUp() {
+    if (layoutLogic.isZoomed) {
+      layoutLogic.panUp();
+    }
+  }
+
+  /// Arrow down pans the visible image when it is zoomed.
+  void handleArrowDown() {
+    if (layoutLogic.isZoomed) {
+      layoutLogic.panDown();
+    }
+  }
+
   void handleM() {
     toggleDisplayFirstPageAlone();
   }
