@@ -496,10 +496,6 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
     }
   }
 
-  Future<void> openInNomacs() {
-    return layoutLogic.openInNomacs(state.readPageInfo.currentImageIndex);
-  }
-
   Future<void> reloadImage(int index) async {
     String? reloadKey;
     if (state.images[index] != null) {

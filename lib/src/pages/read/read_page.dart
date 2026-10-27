@@ -265,63 +265,24 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
         ];
         Widget buildCell(int index) => Expanded(
               flex: columnFlex[index % 3],
-              child: const SizedBox.expand(),
-            );
-
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            int columnAt(double x) {
-              if (constraints.maxWidth <= 0) {
-                return 1;
-              }
-              double percent = x / constraints.maxWidth * 100;
-              if (percent < config.leftColumnWidthRatio) {
-                return 0;
-              }
-              if (percent < config.leftColumnWidthRatio + config.middleColumnWidthRatio) {
-                return 1;
-              }
-              return 2;
-            }
-
-            int rowAt(double y) {
-              if (constraints.maxHeight <= 0) {
-                return 1;
-              }
-              double percent = y / constraints.maxHeight * 100;
-              if (percent < config.topRowHeightRatio) {
-                return 0;
-              }
-              if (percent < config.topRowHeightRatio + config.middleRowHeightRatio) {
-                return 1;
-              }
-              return 2;
-            }
-
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              /// Registering onDoubleTap makes Flutter hold the single-tap
-              /// action for the double-tap timeout, so the first click of a
-              /// double-click does not turn the page.
-              onTapUp: (details) => logic.handleTapZone(
-                rowAt(details.localPosition.dy) * 3 + columnAt(details.localPosition.dx),
-              ),
-              onDoubleTap: () => logic.openInNomacs(),
-              child: Column(
-                children: [
-                  for (int row = 0; row < 3; row++)
-                    Expanded(
-                      flex: rowFlex[row],
-                      child: Row(
-                        children: [
-                          for (int col = 0; col < 3; col++) buildCell(row * 3 + col),
-                        ],
-                      ),
-                    ),
-                ],
+              child: GestureDetector(
+                onTap: () => logic.handleTapZone(index),
+                behavior: HitTestBehavior.opaque,
               ),
             );
-          },
+
+        return Column(
+          children: [
+            for (int row = 0; row < 3; row++)
+              Expanded(
+                flex: rowFlex[row],
+                child: Row(
+                  children: [
+                    for (int col = 0; col < 3; col++) buildCell(row * 3 + col),
+                  ],
+                ),
+              ),
+          ],
         );
       },
     );
