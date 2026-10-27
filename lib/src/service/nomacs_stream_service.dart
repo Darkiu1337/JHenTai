@@ -81,7 +81,7 @@ class NomacsStreamService {
     try {
       process = await Process.start(
         viewerPath,
-        ['--private', '--new-instance', first.path],
+        ['--private', first.path],
         workingDirectory: p.dirname(viewerPath),
         runInShell: false,
       );
@@ -96,7 +96,34 @@ class NomacsStreamService {
     session.process = process;
     session.isRunning = true;
 
-    unawaited(process.exitCode.then((_) async {
+    unawaited(_watchNomacs(session: session, process: process, dir: dir, galleryKey: galleryKey));
+    unawaited(_downloadRemaining(session));
+  }
+
+  /// nomacs 3.22.x has no --new-instance flag. When an instance is already
+  /// running, a second launch forwards the file to it and exits immediately.
+  /// In that case we wait for every nomacs process to exit before deleting the
+  /// temp folder. When our own process stays alive, its exit is the signal.
+  Future<void> _watchNomacs({
+    required _NomacsSession session,
+    required Process process,
+    required Directory dir,
+    required String galleryKey,
+  }) async {
+    try {
+      final int? earlyExit = await Future.any<int?>([
+        process.exitCode,
+        Future<int?>.delayed(const Duration(seconds: 2), () => null),
+      ]);
+
+      if (earlyExit != null) {
+        await _waitForNomacsToExit();
+      } else {
+        await process.exitCode;
+      }
+    } catch (e) {
+      log.warning('Watch nomacs process failed', e);
+    } finally {
       session.cancelled = true;
       await session.done.future;
       session.isRunning = false;
@@ -104,9 +131,26 @@ class NomacsStreamService {
         _sessions.remove(galleryKey);
       }
       await _deleteDirectory(dir);
-    }));
+    }
+  }
 
-    unawaited(_downloadRemaining(session));
+  Future<void> _waitForNomacsToExit() async {
+    while (await _isNomacsRunning()) {
+      await Future.delayed(const Duration(seconds: 3));
+    }
+  }
+
+  Future<bool> _isNomacsRunning() async {
+    try {
+      if (Platform.isWindows) {
+        final ProcessResult result = await Process.run('tasklist', ['/FI', 'IMAGENAME eq nomacs.exe', '/NH']);
+        return result.stdout.toString().toLowerCase().contains('nomacs.exe');
+      }
+      final ProcessResult result = await Process.run('pgrep', ['-x', 'nomacs']);
+      return result.exitCode == 0;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Opens a local file or folder directly (downloaded/archive/local modes).
@@ -120,7 +164,7 @@ class NomacsStreamService {
     try {
       await Process.start(
         viewerPath,
-        ['--private', '--new-instance', path],
+        ['--private', path],
         workingDirectory: p.dirname(viewerPath),
         runInShell: false,
       );
@@ -165,12 +209,23 @@ class NomacsStreamService {
   Future<File?> _ensurePage(_NomacsSession session, int index) async {
     final String base = (index + 1).toString().padLeft(5, '0');
 
-    final File? existing = _findExisting(session.dir, base);
+    File? existing;
+    try {
+      existing = _findExisting(session.dir, base);
+    } catch (e) {
+      log.warning('Scan nomacs temp folder failed', e);
+    }
     if (existing != null) {
       return existing;
     }
 
-    final GalleryImage? image = await session.resolveImage(index);
+    GalleryImage? image;
+    try {
+      image = await session.resolveImage(index);
+    } catch (e) {
+      log.error('Resolve image URL for nomacs failed, page ${index + 1}', e);
+      return null;
+    }
     if (image == null) {
       return null;
     }
