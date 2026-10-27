@@ -83,7 +83,9 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
       // their configured page-turn behaviour (left/right only, by default).
       if (configuredLeft != null)
         LogicalKeyboardKey.arrowLeft: () {
-          if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
+          if (HardwareKeyboard.instance.isAltPressed) {
+            logic.toLeft();
+          } else if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
             logic.layoutLogic.panLeft();
           } else {
             configuredLeft!();
@@ -91,7 +93,9 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
         },
       if (configuredRight != null)
         LogicalKeyboardKey.arrowRight: () {
-          if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
+          if (HardwareKeyboard.instance.isAltPressed) {
+            logic.toRight();
+          } else if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
             logic.layoutLogic.panRight();
           } else {
             configuredRight!();
