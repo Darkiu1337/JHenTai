@@ -74,37 +74,12 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
       ),
     };
 
-    final VoidCallback? configuredLeft = baseKeyHandlers[LogicalKeyboardKey.arrowLeft];
-    final VoidCallback? configuredRight = baseKeyHandlers[LogicalKeyboardKey.arrowRight];
-
     final Map<LogicalKeyboardKey, VoidCallback> keyHandlers = <LogicalKeyboardKey, VoidCallback>{
       ...baseKeyHandlers,
-      // Arrow keys pan the image while it is zoomed. Outside zoom they keep
-      // their configured page-turn behaviour (left/right only, by default).
-      if (configuredLeft != null)
-        LogicalKeyboardKey.arrowLeft: () {
-          if (HardwareKeyboard.instance.isAltPressed) {
-            logic.toLeft();
-          } else if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
-            logic.layoutLogic.panLeft();
-          } else {
-            configuredLeft!();
-          }
-        },
-      if (configuredRight != null)
-        LogicalKeyboardKey.arrowRight: () {
-          if (HardwareKeyboard.instance.isAltPressed) {
-            logic.toRight();
-          } else if (logic.layoutLogic.isZoomed && logic.layoutLogic.panHorizontallyWhenZoomed) {
-            logic.layoutLogic.panRight();
-          } else {
-            configuredRight!();
-          }
-        },
     };
 
-    // Up/down have no default binding. Only add pan handlers when the user has
-    // not mapped those keys to something else.
+    // Left/right always keep their configured page-turn action, even while the
+    // image is zoomed. Only up/down pan the zoomed content.
     keyHandlers.putIfAbsent(LogicalKeyboardKey.arrowUp, () => logic.handleArrowUp);
     keyHandlers.putIfAbsent(LogicalKeyboardKey.arrowDown, () => logic.handleArrowDown);
 

@@ -25,9 +25,6 @@ class VerticalListLayoutLogic extends BaseLayoutLogic {
   int _lastImageIndex = -1;
 
   @override
-  bool get panHorizontallyWhenZoomed => false;
-
-  @override
   PhotoViewControllerBase? get activePhotoViewController => state.photoViewController;
 
   /// In list mode the visible image already sits at the top of the viewport,

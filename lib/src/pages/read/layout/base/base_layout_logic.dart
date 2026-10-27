@@ -119,11 +119,6 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     }
   }
 
-  /// Whether horizontal arrow keys should pan the zoomed content instead of
-  /// turning the page. Page layouts and horizontal lists pan; the vertical
-  /// list keeps left/right for page turns.
-  bool get panHorizontallyWhenZoomed => true;
-
   /// Controller of the content currently visible in the viewport.
   ///
   /// Page layouts return the controller of the current page, list layouts
@@ -157,10 +152,6 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   void panUp() => panBy(Offset(0, panStep.dy));
 
   void panDown() => panBy(Offset(0, -panStep.dy));
-
-  void panLeft() => panBy(Offset(panStep.dx, 0));
-
-  void panRight() => panBy(Offset(-panStep.dx, 0));
 
   /// Position that puts the top edge of the visible content at the top of the
   /// viewport without changing the current scale.
