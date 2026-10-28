@@ -9,6 +9,7 @@ import '../../../mixin/double_tap_to_refresh_state_mixin.dart';
 import '../../../model/tab_bar_icon.dart';
 import '../../../routes/routes.dart';
 import '../../../setting/preference_setting.dart';
+import '../../../widget/eight_muses_mark.dart';
 import '../../download/download_base_page.dart';
 import '../../eight_muses/eight_muses_page.dart';
 import '../../favorite/favorite_page.dart';
@@ -116,8 +117,8 @@ class MobileLayoutPageV2State with DoubleTapToRefreshStateMixin {
       TabBarIcon(
         name: TabBarIconNameEnum.eightMuses,
         routeName: Routes.eightMuses,
-        selectedIcon: const Icon(Icons.public),
-        unselectedIcon: const Icon(Icons.public_outlined),
+        selectedIcon: const EightMusesMark(size: 22),
+        unselectedIcon: const Opacity(opacity: 0.65, child: EightMusesMark(size: 22)),
         page: () => const EightMusesPage(),
         shouldRender: false,
       ),

@@ -11,6 +11,7 @@ import 'package:jhentai/src/pages/setting/setting_page.dart';
 import 'package:jhentai/src/pages/watched/watched_page.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/setting/preference_setting.dart';
+import 'package:jhentai/src/widget/eight_muses_mark.dart';
 
 import '../../../mixin/double_tap_to_refresh_state_mixin.dart';
 import '../../../model/tab_bar_icon.dart';
@@ -112,8 +113,8 @@ class DesktopLayoutPageState with DoubleTapToRefreshStateMixin {
       TabBarIcon(
         name: TabBarIconNameEnum.eightMuses,
         routeName: Routes.eightMuses,
-        selectedIcon: const Icon(Icons.public),
-        unselectedIcon: const Icon(Icons.public_outlined),
+        selectedIcon: const EightMusesMark(size: 22),
+        unselectedIcon: const Opacity(opacity: 0.65, child: EightMusesMark(size: 22)),
         page: () => const EightMusesPage(),
         shouldRender: false,
       ),

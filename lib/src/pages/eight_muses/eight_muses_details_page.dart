@@ -19,6 +19,7 @@ import 'package:jhentai/src/utils/eight_muses_parser.dart';
 import 'package:jhentai/src/utils/route_util.dart';
 import 'package:jhentai/src/utils/toast_util.dart';
 import 'package:jhentai/src/widget/eh_image.dart';
+import 'package:jhentai/src/widget/eight_muses_mark.dart';
 import 'package:jhentai/src/widget/loading_state_indicator.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -187,10 +188,18 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          detail?.title ?? gallery.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Row(
+          children: [
+            const EightMusesMark(size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                detail?.title ?? gallery.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(

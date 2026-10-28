@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:jhentai/src/model/eight_muses_detail.dart';
+import 'package:jhentai/src/model/eight_muses_search.dart';
 import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/model/gallery_image.dart';
 import 'package:jhentai/src/model/gallery_tag.dart';
@@ -46,6 +47,7 @@ class EightMusesParser {
     final List<Gallery> galleries = <Gallery>[];
     final Set<int> seen = <int>{};
     final Map<int, int> pages = parsePagesMap(html);
+    final Map<int, List<String>> genres = parseGenresMap(html);
 
     for (final Match match in _cardRegExp.allMatches(html)) {
       final int? id = int.tryParse(match.group(1) ?? '');
@@ -72,11 +74,65 @@ class EightMusesParser {
           publishTime: _nowString(),
           isExpunged: false,
           tags: LinkedHashMap<String, List<GalleryTag>>(),
+          externalTags: genres[id] ?? const <String>[],
         ),
       );
     }
 
     return galleries;
+  }
+
+  /// Genres of every gallery on a listing/tag/artist page.
+  ///
+  /// Search result pages do not include them (the field is an empty array), so
+  /// tag filtering is only possible on tag/artist/listing pages.
+  static Map<int, List<String>> parseGenresMap(String html) {
+    final Map<int, List<String>> result = <int, List<String>>{};
+    for (final Match match in _rscIdRegExp.allMatches(html)) {
+      final int? id = int.tryParse(match.group(1) ?? '');
+      if (id == null || result.containsKey(id)) {
+        continue;
+      }
+
+      final int end = match.start + 1600;
+      final String segment = html.substring(match.end, end < html.length ? end : html.length);
+      final Match? genresMatch = RegExp(r'\\"genres\\":\[(.*?)\]').firstMatch(segment) ?? RegExp(r'"genres":\[(.*?)\]').firstMatch(segment);
+      if (genresMatch == null) {
+        continue;
+      }
+
+      final String raw = genresMatch.group(1) ?? '';
+      final List<String> genres = RegExp(r'\\?"((?:[^"\\]|\\.)*)\\?"')
+          .allMatches(raw)
+          .map((Match m) => unescapeHtml((m.group(1) ?? '').replaceAll(r'\"', '"')).trim())
+          .where((String e) => e.isNotEmpty)
+          .toList();
+      result[id] = genres;
+    }
+    return result;
+  }
+
+  /// Tag directory (`/genres`): 120 tags with their gallery counts.
+  static List<EightMusesTag> parseTags(String html) {
+    final List<EightMusesTag> tags = <EightMusesTag>[];
+    final Set<String> seen = <String>{};
+
+    final RegExp cardRegExp = RegExp(r'<a class="directory-card"[^>]*?title="([^"]*)"[^>]*?href="/tag/([^"]*)"[^>]*>([\s\S]*?)</a>');
+    for (final Match match in cardRegExp.allMatches(html)) {
+      final String label = unescapeHtml(match.group(1) ?? '').trim();
+      final String slug = (match.group(2) ?? '').trim();
+      if (slug.isEmpty || !seen.add(slug)) {
+        continue;
+      }
+
+      final Match? countMatch = RegExp(r'<small>([\d.,\s]+)').firstMatch(match.group(3) ?? '');
+      final int count = countMatch == null ? 0 : int.tryParse(countMatch.group(1)!.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
+
+      tags.add(EightMusesTag(slug: slug, label: label.isEmpty ? slug : label, count: count));
+    }
+
+    tags.sort((EightMusesTag a, EightMusesTag b) => b.count.compareTo(a.count));
+    return tags;
   }
 
   /// Map of gallery id -> page count, taken from the RSC payload of a listing.

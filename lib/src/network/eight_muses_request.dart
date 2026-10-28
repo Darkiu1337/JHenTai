@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:jhentai/src/model/eight_muses_detail.dart';
+import 'package:jhentai/src/model/eight_muses_search.dart';
 import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/setting/network_setting.dart';
 import 'package:jhentai/src/utils/eight_muses_parser.dart';
@@ -50,6 +51,35 @@ class EightMusesRequest {
     final String query = Uri.encodeQueryComponent(keyword.trim());
     final String path = page <= 1 ? '/search?q=$query' : '/search/page/$page?q=$query';
     return _requestGalleryPage(path);
+  }
+
+  Future<List<Gallery>> search({required EightMusesSearchConfig config, required int page}) async {
+    final Map<String, String> params = <String, String>{
+      if (config.hasKeyword) 'q': config.keyword.trim(),
+      if (config.contentType != EightMusesContentType.all) 'type': config.contentType.apiValue,
+      if (config.language != EightMusesLanguage.all) 'lang': config.language.apiValue,
+      'sort': config.sort.apiValue,
+    };
+
+    final String query = Uri(queryParameters: params).query;
+    final String path = page <= 1 ? '/search?$query' : '/search/page/$page?$query';
+    return _requestGalleryPage(path);
+  }
+
+  /// A tag listing, used as the base when include tags are selected.
+  Future<List<Gallery>> requestTagPage({required String tagSlug, required int page}) {
+    final String path = page <= 1 ? '/tag/$tagSlug' : '/tag/$tagSlug/page/$page';
+    return _requestGalleryPage(path);
+  }
+
+  /// Tag directory of `/genres`.
+  Future<List<EightMusesTag>> requestTags() async {
+    final Response<String> response = await dio.get<String>(
+      '$baseUrl/genres',
+      options: Options(responseType: ResponseType.plain),
+    );
+
+    return EightMusesParser.parseTags(response.data ?? '');
   }
 
   Future<EightMusesDetail> requestDetail(int id) async {

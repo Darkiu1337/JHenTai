@@ -16,8 +16,8 @@ enum TabBarIconNameEnum {
 class TabBarIcon {
   final TabBarIconNameEnum name;
   final String routeName;
-  final Icon selectedIcon;
-  final Icon unselectedIcon;
+  final Widget selectedIcon;
+  final Widget unselectedIcon;
   final ValueGetter<Widget> page;
   final ValueGetter<ScrollController>? scrollController;
   bool shouldRender;

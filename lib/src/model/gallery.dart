@@ -32,6 +32,12 @@ class Gallery {
   bool isExpunged;
   LinkedHashMap<String, List<GalleryTag>> tags;
 
+  /// Raw genres of an external source (8muses). Empty for E-H galleries.
+  ///
+  /// Used by the external search page to filter by tag locally, because the
+  /// site's search results do not carry genres (listing/tag pages do).
+  List<String> externalTags;
+
   bool blockedByLocalRules;
 
   int get gid => galleryUrl.gid;
@@ -55,6 +61,7 @@ class Gallery {
     required this.publishTime,
     required this.isExpunged,
     required this.tags,
+    this.externalTags = const <String>[],
     this.blockedByLocalRules = false,
   });
 
@@ -77,6 +84,7 @@ class Gallery {
       'publishTime': publishTime,
       'isExpunged': isExpunged,
       'tags': tags,
+      'externalTags': externalTags,
     };
   }
 
@@ -103,6 +111,7 @@ class Gallery {
           ),
         ),
       ),
+      externalTags: (map['externalTags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[],
     );
   }
 
@@ -126,6 +135,7 @@ class Gallery {
     String? publishTime,
     bool? isExpunged,
     LinkedHashMap<String, List<GalleryTag>>? tags,
+    List<String>? externalTags,
     bool? blockedByLocalRules,
   }) {
     return Gallery(
@@ -143,6 +153,7 @@ class Gallery {
       publishTime: publishTime ?? this.publishTime,
       isExpunged: isExpunged ?? this.isExpunged,
       tags: tags ?? this.tags,
+      externalTags: externalTags ?? this.externalTags,
       blockedByLocalRules: blockedByLocalRules ?? this.blockedByLocalRules,
     );
   }
