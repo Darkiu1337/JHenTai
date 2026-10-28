@@ -58,11 +58,11 @@ dependencies:
       url: https://github.com/MixinNetwork/flutter-plugins
       path: packages/desktop_webview_window
       ref: d0c91d9c3ea12883d38215adc48586753fb41dde
-  # rewrite double tap & tap drag gesture
+  # Vendored copy of jiangtian616/photo_view@1fecde37 (double tap & tap drag
+  # gesture rewrite plus ctrl+scroll zoom). It lives in this repo so the reader
+  # can tune the zoom steps and seed a page's scale before it mounts.
   photo_view:
-    git:
-      url: https://github.com/jiangtian616/photo_view
-      ref: 1fecde37
+    path: packages/photo_view
   zoom_view: 
     git: https://github.com/jiangtian616/zoom_view
   package_info_plus: 8.0.3
