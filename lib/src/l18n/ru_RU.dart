@@ -856,7 +856,7 @@ class ru_RU {
       'import': 'Импорт',
       'save2Local': 'Сохранить локально',
       'readIndexRecord': 'Прогресс чтения',
-      'quickSearch': 'Быстрый поиск',
+      'quickSearchConfig': 'Настройки быстрого поиска',
       'blockRules': 'Правила блокировки',
       'searchHistory': 'История поиска',
       'galleryHistory': 'История галерей',

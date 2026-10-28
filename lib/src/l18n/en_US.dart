@@ -144,6 +144,7 @@ class en_US {
       'noComments': 'No Comments',
       'lastEditedOn': 'Last edited on',
       'getGalleryDetailFailed': 'Get Gallery Detail Failed',
+      'getMetaDataFailed': 'Get metadata failed',
       'cloudflare403': 'You have been restricted by Cloudflare from making network requests. Please try switching networks or using another login method.',
       'invisible2User': 'This Gallery is invisible to You',
       'invisibleHints': 'This gallery is removed or unavailable.',
@@ -207,6 +208,8 @@ class en_US {
 
       /// detail dialog
       'galleryUrl': 'Gallery Url',
+      'gid': 'GID',
+      'token': 'Token',
       'title': 'Title',
       'japaneseTitle': 'Japanese Title',
       'category': 'Category',
@@ -285,6 +288,7 @@ class en_US {
       'imDonorHint': 'If you are a donor, you can turn this on to help you access galleries in EX site',
       'profileSetting': 'Profile Setting',
       'chooseProfileHint': 'Choose profile used in JHenTai',
+      'loadProfileFailed': 'Load profile failed',
       'siteSetting': 'Site Setting',
       'siteSettingHint': 'Edit site setting in e-hentai',
       'showCookie': 'Cookie',
@@ -853,7 +857,7 @@ class en_US {
       'import': 'Import',
       'save2Local': 'Save to Local',
       'readIndexRecord': 'Read Progress',
-      'quickSearch': 'Quick Search Config',
+      'quickSearchConfig': 'Quick Search Config',
       'blockRules': 'Block Rules',
       'searchHistory': 'Search History',
       'galleryHistory': 'Gallery History',

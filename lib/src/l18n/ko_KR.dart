@@ -846,7 +846,7 @@ class ko_KR {
       'import': 'Import',
       'save2Local': 'Save to Local',
       'readIndexRecord': 'Read Progress',
-      'quickSearch': 'Quick Search Config',
+      'quickSearchConfig': '빠른 검색 설정',
       'blockRules': 'Block Rules',
       'searchHistory': 'Search History',
       'galleryHistory': 'Gallery History',
