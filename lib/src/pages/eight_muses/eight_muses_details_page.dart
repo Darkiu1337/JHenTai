@@ -502,7 +502,7 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: () => _openRead(),
+                onPressed: _openRead,
                 icon: const Icon(Icons.menu_book),
                 label: Text('read'.tr),
               ),
