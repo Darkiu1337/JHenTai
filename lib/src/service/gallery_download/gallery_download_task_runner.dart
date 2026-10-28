@@ -116,10 +116,12 @@ class _GalleryDownloadTaskRunner {
       GalleryDownloadInfo galleryDownloadInfo = _service.galleryDownloadInfos[gallery.gid]!;
 
       /// External sources (8muses) expose the final page url up front, so there
-      /// is no E-H detail page to parse.
+      /// is no E-H detail page to parse. `imageHrefs` holds [GalleryThumbnail]s
+      /// on this code path only as url carriers.
       final int? externalId = eightMusesExternalId(gallery.gid);
       if (externalId != null) {
-        galleryDownloadInfo.imageHrefs[serialNo] = EightMusesParser.pageUrl(externalId, serialNo + 1);
+        final String pageUrl = EightMusesParser.pageUrl(externalId, serialNo + 1);
+        galleryDownloadInfo.imageHrefs[serialNo] = GalleryThumbnail(href: pageUrl, isLarge: true, thumbUrl: pageUrl);
         return _service._submitImageTask(gallery, serialNo, () => parseImageUrlTask(serialNo));
       }
 
@@ -184,7 +186,7 @@ class _GalleryDownloadTaskRunner {
       /// External sources (8muses): the href is already the final image url.
       final int? externalId = eightMusesExternalId(gallery.gid);
       if (externalId != null) {
-        final String href = galleryDownloadInfo.imageHrefs[serialNo]!;
+        final String href = galleryDownloadInfo.imageHrefs[serialNo]!.href;
         final GalleryImage image = GalleryImage(url: href);
         image.path = DownloadPathResolver.computeImageDownloadRelativePath(gallery.toGalleryDownloadedData(), href, serialNo);
         image.downloadStatus = DownloadStatus.downloading;

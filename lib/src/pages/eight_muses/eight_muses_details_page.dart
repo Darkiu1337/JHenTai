@@ -164,7 +164,8 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
         uploader: loaded.author,
         publishTime: loaded.publishTime,
         downloadOriginalImage: false,
-        group: downloadSetting.defaultGalleryGroup.value,
+        group: downloadSetting.defaultGalleryGroup.value ??
+            (galleryDownloadService.allGroups.isNotEmpty ? galleryDownloadService.allGroups.first : 'Default'),
         tags: '',
         tagRefreshTime: DateTime.now().toString(),
       ),
