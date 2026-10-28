@@ -15,6 +15,7 @@ import '../../../../service/log.dart';
 import '../../../../widget/eh_image.dart';
 import '../../../../widget/icon_text_button.dart';
 import '../../../../widget/loading_state_indicator.dart';
+import '../../../../widget/unzoomed_placeholder.dart';
 import '../../read_page_logic.dart';
 import '../../read_page_state.dart';
 import 'base_layout_logic.dart';
@@ -67,6 +68,15 @@ abstract class BaseLayout extends StatelessWidget {
 
   Widget buildBody(BuildContext context);
 
+  /// Keeps a loading/error placeholder at its natural size when the page is
+  /// zoomed (the placeholder lives inside the page's PhotoView transform).
+  Widget _placeholderOf(int index, Widget child) {
+    return UnzoomedPlaceholder(
+      controller: logic.photoViewControllerForPlaceholder(index),
+      child: child,
+    );
+  }
+
   /// online mode: parsing and loading automatically while scrolling
   Widget buildItemInOnlineMode(BuildContext context, int index) {
     return GetBuilder<ReadPageLogic>(
@@ -77,7 +87,7 @@ abstract class BaseLayout extends StatelessWidget {
           if (readPageState.parseImageHrefsStates[index] == LoadingState.idle) {
             readPageLogic.beginToParseImageHref(index);
           }
-          return _buildParsingHrefsIndicator(context, index);
+          return _placeholderOf(index, _buildParsingHrefsIndicator(context, index));
         }
 
         /// step 2: parse image url.
@@ -85,7 +95,7 @@ abstract class BaseLayout extends StatelessWidget {
           if (readPageState.parseImageUrlStates[index] == LoadingState.idle) {
             readPageLogic.beginToParseImageUrl(index, false);
           }
-          return _buildParsingUrlIndicator(context, index);
+          return _placeholderOf(index, _buildParsingUrlIndicator(context, index));
         }
 
         /// step 3: use url to load image
@@ -163,8 +173,8 @@ abstract class BaseLayout extends StatelessWidget {
         containerWidth: logic.readPageState.imageContainerSizes[index]?.width ?? logic.getPlaceHolderSize(index).width,
         containerHeight: logic.readPageState.imageContainerSizes[index]?.height ?? logic.getPlaceHolderSize(index).height,
         clearMemoryCacheWhenDispose: true,
-        loadingProgressWidgetBuilder: (double progress) => _loadingProgressWidgetBuilder(index, progress),
-        failedWidgetBuilder: (ExtendedImageState state) => _failedWidgetBuilder(index, state),
+        loadingProgressWidgetBuilder: (double progress) => _placeholderOf(index, _loadingProgressWidgetBuilder(index, progress)),
+        failedWidgetBuilder: (ExtendedImageState state) => _placeholderOf(index, _failedWidgetBuilder(index, state)),
         completedWidgetBuilder: (state) => completedWidgetBuilderCallBack(index, state),
         animateOnlyWhenVisible: true,
         enableUpscale: readSetting.enableUpscale.isTrue && !readPageState.useSuperResolution,
@@ -231,12 +241,12 @@ abstract class BaseLayout extends StatelessWidget {
         /// step 1: wait for parsing image's href for this image. But if image's url has been parsed,
         /// we don't need to wait parsing thumbnail.
         if (readPageState.thumbnails[index] == null && readPageState.images[index] == null) {
-          return _buildWaitParsingHrefsIndicator(context, index);
+          return _placeholderOf(index, _buildWaitParsingHrefsIndicator(context, index));
         }
 
         /// step 2: wait for parsing image's url.
         if (readPageState.images[index] == null) {
-          return _buildWaitParsingUrlIndicator(context, index);
+          return _placeholderOf(index, _buildWaitParsingUrlIndicator(context, index));
         }
 
         /// step 3: check if we are using super resolution
@@ -271,8 +281,8 @@ abstract class BaseLayout extends StatelessWidget {
             containerHeight: logic.readPageState.imageContainerSizes[index]?.height ?? logic.getPlaceHolderSize(index).height,
             clearMemoryCacheWhenDispose: true,
             enableUpscale: readSetting.enableUpscale.isTrue && !readPageState.useSuperResolution,
-            loadingWidgetBuilder: () => _loadingWidgetBuilder(context, index),
-            failedWidgetBuilder: (state) => _failedWidgetBuilderForLocalMode(index, state),
+            loadingWidgetBuilder: () => _placeholderOf(index, _loadingWidgetBuilder(context, index)),
+            failedWidgetBuilder: (state) => _placeholderOf(index, _failedWidgetBuilderForLocalMode(index, state)),
             completedWidgetBuilder: (state) => completedWidgetBuilderForLocalModeCallBack(index, state),
             animateOnlyWhenVisible: true,
             maxBytes: readSetting.enableMaxImageKilobyte.isTrue ? readSetting.maxImageKilobyte.toInt() * 1024 : null,
@@ -331,10 +341,10 @@ abstract class BaseLayout extends StatelessWidget {
         containerHeight: logic.readPageState.imageContainerSizes[index]?.height ?? logic.getPlaceHolderSize(index).height,
         clearMemoryCacheWhenDispose: true,
         enableUpscale: readSetting.enableUpscale.isTrue && !readPageState.useSuperResolution,
-        downloadingWidgetBuilder: () => _downloadingWidgetBuilder(index),
-        pausedWidgetBuilder: () => _pausedWidgetBuilder(index),
-        loadingWidgetBuilder: () => _loadingWidgetBuilder(context, index),
-        failedWidgetBuilder: (state) => _failedWidgetBuilderForLocalMode(index, state),
+        downloadingWidgetBuilder: () => _placeholderOf(index, _downloadingWidgetBuilder(index)),
+        pausedWidgetBuilder: () => _placeholderOf(index, _pausedWidgetBuilder(index)),
+        loadingWidgetBuilder: () => _placeholderOf(index, _loadingWidgetBuilder(context, index)),
+        failedWidgetBuilder: (state) => _placeholderOf(index, _failedWidgetBuilderForLocalMode(index, state)),
         completedWidgetBuilder: (state) => completedWidgetBuilderForLocalModeCallBack(index, state),
         animateOnlyWhenVisible: true,
         maxBytes: readSetting.enableMaxImageKilobyte.isTrue ? readSetting.maxImageKilobyte.toInt() * 1024 : null,

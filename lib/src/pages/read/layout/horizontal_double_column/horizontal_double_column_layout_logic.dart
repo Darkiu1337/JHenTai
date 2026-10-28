@@ -47,6 +47,14 @@ class HorizontalDoubleColumnLayoutLogic extends BaseLayoutLogic {
   @override
   Size? get activeContentSize => initCompleter.isCompleted ? _contentSizeForPage(currentPageIndex) : null;
 
+  @override
+  PhotoViewControllerBase? photoViewControllerForPlaceholder(int imageIndex) {
+    if (!initCompleter.isCompleted) {
+      return null;
+    }
+    return pageViewControllerFor(computePageIndexOfImage(imageIndex));
+  }
+
   /// Controller of [pageIndex], created with the zoom of the reading session
   /// already applied so the page is never painted at 1.0 before being zoomed.
   PhotoViewController pageViewControllerFor(int pageIndex) {

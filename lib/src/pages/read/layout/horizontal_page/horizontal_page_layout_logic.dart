@@ -40,6 +40,9 @@ class HorizontalPageLayoutLogic extends BaseLayoutLogic {
   @override
   Size? get activeContentSize => readPageState.imageContainerSizes[currentPageIndex];
 
+  @override
+  PhotoViewControllerBase? photoViewControllerForPlaceholder(int imageIndex) => pageViewControllerFor(imageIndex);
+
   /// Controller of [pageIndex], created with the zoom of the reading session
   /// already applied.
   ///

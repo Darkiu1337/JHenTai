@@ -131,6 +131,14 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   /// Size of the visible content at scale 1.0, when the layout can compute it.
   Size? get activeContentSize => null;
 
+  /// Controller of the page that owns [imageIndex], used to keep loading and
+  /// error placeholders unzoomed.
+  ///
+  /// List layouts return null: their PhotoView child is the whole list, not a
+  /// viewport sized page, so the inverse transform used for placeholders does
+  /// not apply there.
+  PhotoViewControllerBase? photoViewControllerForPlaceholder(int imageIndex) => null;
+
   double get activeScale => activePhotoViewController?.scale ?? 1.0;
 
   bool get isZoomed => activeScale > maxZoomScaleEpsilon;
