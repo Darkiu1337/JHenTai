@@ -39,6 +39,7 @@ import '../../service/local_config_service.dart';
 import '../../service/log.dart';
 import '../../service/gallery_download/gallery_images_retainer.dart';
 import '../../service/read_progress_service.dart';
+import '../../service/upscale_service.dart';
 import '../../setting/preference_setting.dart';
 import '../../setting/read_setting.dart';
 import '../../utils/eh_spider_parser.dart';
@@ -329,6 +330,9 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
     /// Unpause + forget every animation gate this page created so a codec
     /// parked on a gate is not frozen forever after the page is torn down.
     EHImageAnimationGateRegistry.clear();
+
+    /// Release the 2x upscaled textures of this reading session.
+    upscaleService.clearCache();
   }
 
   void beginToParseImageHref(int index) {

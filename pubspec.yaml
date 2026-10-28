@@ -175,12 +175,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   shaders:
-    - assets/shaders/anime4k/restore_L_0.frag
-    - assets/shaders/anime4k/restore_L_1.frag
-    - assets/shaders/anime4k/restore_L_2.frag
-    - assets/shaders/anime4k/restore_L_3.frag
-    - assets/shaders/anime4k/restore_L_4.frag
-    - assets/shaders/anime4k/restore_L_5.frag
-    - assets/shaders/anime4k/restore_L_6.frag
-    - assets/shaders/anime4k/restore_L_7.frag
-    - assets/shaders/anime4k/restore_L_8.frag
+    - assets/shaders/upscale/bicubic_x2.frag
+    - assets/shaders/upscale/cas.frag

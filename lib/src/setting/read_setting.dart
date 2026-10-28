@@ -23,7 +23,9 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   RxBool enablePageTurnAnime = true.obs;
   RxBool enableDoubleTapToScaleUp = false.obs;
   RxBool enableTapDragToScaleUp = false.obs;
-  RxBool enableAnime4KRestore = false.obs;
+
+  /// Build a 2x bicubic + CAS copy of each page so zoomed images stay crisp.
+  RxBool enableUpscale = true.obs;
 
   /// Align a zoomed page to its top edge when the reader turns the page.
   RxBool alignToTopWhenTurnPage = true.obs;
@@ -144,7 +146,7 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
     enablePageTurnAnime.value = map['enablePageTurnAnime'];
     enableDoubleTapToScaleUp.value = map['enableDoubleTapToScaleUp'] ?? enableDoubleTapToScaleUp.value;
     enableTapDragToScaleUp.value = map['enableTapDragToScaleUp'] ?? enableTapDragToScaleUp.value;
-    enableAnime4KRestore.value = map['enableAnime4KRestore'] ?? enableAnime4KRestore.value;
+    enableUpscale.value = map['enableUpscale'] ?? enableUpscale.value;
     alignToTopWhenTurnPage.value = map['alignToTopWhenTurnPage'] ?? alignToTopWhenTurnPage.value;
     zoomStepPercent.value = (map['zoomStepPercent'] as num?)?.toInt() ?? zoomStepPercent.value;
     enableBottomMenu.value = map['enableBottomMenu'] ?? enableBottomMenu.value;
@@ -192,7 +194,7 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
       'enablePageTurnAnime': enablePageTurnAnime.value,
       'enableDoubleTapToScaleUp': enableDoubleTapToScaleUp.value,
       'enableTapDragToScaleUp': enableTapDragToScaleUp.value,
-      'enableAnime4KRestore': enableAnime4KRestore.value,
+      'enableUpscale': enableUpscale.value,
       'alignToTopWhenTurnPage': alignToTopWhenTurnPage.value,
       'zoomStepPercent': zoomStepPercent.value,
       'enableBottomMenu': enableBottomMenu.value,
@@ -387,9 +389,9 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
     await saveBeanConfig();
   }
 
-  Future<void> saveEnableAnime4KRestore(bool value) async {
-    log.debug('saveEnableAnime4KRestore:$value');
-    enableAnime4KRestore.value = value;
+  Future<void> saveEnableUpscale(bool value) async {
+    log.debug('saveEnableUpscale:$value');
+    enableUpscale.value = value;
     await saveBeanConfig();
   }
 

@@ -57,7 +57,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   Worker? doubleTapGestureSwitcherListener;
   Worker? tapDragGestureSwitcherListener;
   Worker? showScrollBarListener;
-  Worker? anime4KRestoreListener;
+  Worker? upscaleListener;
   Worker? zoomStepListener;
 
   @override
@@ -65,7 +65,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     doubleTapGestureSwitcherListener = ever(readSetting.enableDoubleTapToScaleUp, (value) => updateSafely([pageId]));
     tapDragGestureSwitcherListener = ever(readSetting.enableTapDragToScaleUp, (value) => updateSafely([pageId]));
     showScrollBarListener = ever(readSetting.showScrollBar, (value) => updateSafely([pageId]));
-    anime4KRestoreListener = ever(readSetting.enableAnime4KRestore, (value) => updateSafely([pageId]));
+    upscaleListener = ever(readSetting.enableUpscale, (value) => updateSafely([pageId]));
     zoomStepListener = ever(readSetting.zoomStepPercent, (value) => updateSafely([pageId]));
     super.onInit();
   }
@@ -77,7 +77,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     doubleTapGestureSwitcherListener?.dispose();
     tapDragGestureSwitcherListener?.dispose();
     showScrollBarListener?.dispose();
-    anime4KRestoreListener?.dispose();
+    upscaleListener?.dispose();
     zoomStepListener?.dispose();
     super.onClose();
   }

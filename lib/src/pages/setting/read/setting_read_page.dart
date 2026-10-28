@@ -47,7 +47,7 @@ class SettingReadPage extends StatelessWidget {
                   _buildEnablePageTurnAnime().center(),
                   _buildEnableDoubleTapToScaleUp().center(),
                   _buildEnableTapDragToScaleUp().center(),
-                  _buildEnableAnime4KRestore().center(),
+                  _buildEnableUpscale().center(),
                   _buildAlignToTopWhenTurnPage().center(),
                   _buildZoomStepPercent().center(),
                   _buildEnableBottomMenu().center(),
@@ -243,13 +243,13 @@ class SettingReadPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEnableAnime4KRestore() {
+  Widget _buildEnableUpscale() {
     return SwitchListTile(
-      title: Text('enableAnime4KRestore'.tr),
-      subtitle: Text('enableAnime4KRestoreHint'.tr),
-      value: readSetting.enableAnime4KRestore.value,
+      title: Text('enableUpscale'.tr),
+      subtitle: Text('enableUpscaleHint'.tr),
+      value: readSetting.enableUpscale.value,
       onChanged: (bool value) {
-        readSetting.saveEnableAnime4KRestore(value);
+        readSetting.saveEnableUpscale(value);
       },
     );
   }
