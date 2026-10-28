@@ -50,8 +50,6 @@ class EightMusesRequest {
   Future<List<Gallery>> search({required EightMusesSearchConfig config, required int page}) async {
     final Map<String, String> params = <String, String>{
       if (config.hasKeyword) 'q': config.keyword.trim(),
-      if (config.contentType != EightMusesContentType.all) 'type': config.contentType.apiValue,
-      if (config.language != EightMusesLanguage.all) 'lang': config.language.apiValue,
       'sort': config.sort.apiValue,
     };
 
@@ -66,6 +64,12 @@ class EightMusesRequest {
     return _requestGalleryPage(path);
   }
 
+  /// An artist listing (`/artist/<slug>`), paginated like the other listings.
+  Future<List<Gallery>> requestArtistPage({required String artistSlug, required int page}) {
+    final String path = page <= 1 ? '/artist/$artistSlug' : '/artist/$artistSlug/page/$page';
+    return _requestGalleryPage(path);
+  }
+
   /// Tag directory of `/genres`.
   Future<List<EightMusesTag>> requestTags() async {
     final Response<String> response = await dio.get<String>(
@@ -74,6 +78,16 @@ class EightMusesRequest {
     );
 
     return EightMusesParser.parseTags(response.data ?? '');
+  }
+
+  /// Artist directory of `/artists`.
+  Future<List<EightMusesTag>> requestArtists() async {
+    final Response<String> response = await dio.get<String>(
+      '$baseUrl/artists',
+      options: Options(responseType: ResponseType.plain),
+    );
+
+    return EightMusesParser.parseArtists(response.data ?? '');
   }
 
   Future<EightMusesDetail> requestDetail(int id) async {

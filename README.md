@@ -234,15 +234,20 @@ Cloudflare clearance.
 
 -   New tab with the 8muses brand mark (drawn with a painter, no asset):
     *Popular*, *Latest*, *Browse all* and an inline search bar (no dialog).
--   **Keyword search** with content type (`manga`, `doujinshi`, `western`,
-    `image-set`, `artist-cg`, `game-cg`), language (`en`/`ja`/`es`/`fr`/`ko`/`de`/`ru`)
-    and sort (*best match*, *newest*, *most viewed*) — all server-side.
+-   **Keyword search** with sorting (*best match*, *newest*, *most viewed*),
+    server-side. Content type and language were deliberately left out: the site
+    only has data for two content types (`manga`, `image-set`) and every gallery
+    is English, so those controls would do nothing.
 -   **Tag search**: the 120 tags of `/genres` (with gallery counts) in a filter
     panel, supporting **include and exclude**. The first included tag is sent to
     the site (`/tag/<slug>`); the remaining tags and an extra keyword are
-    intersected locally, and the footer shows
-    *Filtering within "<tag>" — shown/scanned*. Type/language/sort only apply to
-    keyword searches because the site cannot combine them with a tag.
+    intersected locally, and the footer shows *Filtering within "<tag>"*.
+-   **Artist filter**: the featured artists of `/artists` (with gallery counts),
+    searched and picked in the same panel. An artist listing
+    (`/artist/<slug>`, paginated) becomes the base, and tags/keyword are applied
+    on top locally.
+-   Sorting only applies to keyword searches; tag/artist listings are ordered by
+    the site.
 -   **Recent searches** and **popular tags** are suggested when the field is
     focused.
 -   **Gallery detail**: cover, author, page count, description and the **real
@@ -258,7 +263,8 @@ Known limitations:
 
 -   No de-duplication against E-Hentai: the same work may appear as two galleries.
 -   8muses exposes at most **5 tags per gallery** (site limitation).
--   Multi-tag filtering is local, so rare intersections may need *Load more*.
+-   Multi-tag and artist+tag filtering are local, so rare intersections may need
+    *Load more*.
 -   The site mirrors `8muses.com` and `allporncomic.com`, so coverage of a given
     artist is partial.
 

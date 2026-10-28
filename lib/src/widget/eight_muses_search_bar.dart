@@ -126,19 +126,12 @@ class EightMusesSearchBar extends StatelessWidget {
                 deleteIcon: const Icon(Icons.close, size: 16),
               ),
             ),
-          if (config.contentType != EightMusesContentType.all)
+          if (config.artist != null)
             _padding(
               InputChip(
-                label: Text(config.contentType.label),
-                onDeleted: () => logic.setContentType(EightMusesContentType.all),
-                deleteIcon: const Icon(Icons.close, size: 16),
-              ),
-            ),
-          if (config.language != EightMusesLanguage.all)
-            _padding(
-              InputChip(
-                label: Text(config.language.label),
-                onDeleted: () => logic.setLanguage(EightMusesLanguage.all),
+                avatar: const Icon(Icons.person, size: 16),
+                label: Text(config.artist!.label),
+                onDeleted: () => logic.selectArtist(null),
                 deleteIcon: const Icon(Icons.close, size: 16),
               ),
             ),

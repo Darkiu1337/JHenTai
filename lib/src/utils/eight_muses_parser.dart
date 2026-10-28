@@ -112,12 +112,15 @@ class EightMusesParser {
     return result;
   }
 
-  /// Tag directory (`/genres`): 120 tags with their gallery counts.
-  static List<EightMusesTag> parseTags(String html) {
+  /// Tag directory (`/genres`) and artist directory (`/artists`) are both grids
+  /// of `.directory-card` links with a count in `<small>`.
+  static List<EightMusesTag> _parseDirectory(String html, String segment) {
     final List<EightMusesTag> tags = <EightMusesTag>[];
     final Set<String> seen = <String>{};
 
-    final RegExp cardRegExp = RegExp(r'<a class="directory-card"[^>]*?title="([^"]*)"[^>]*?href="/tag/([^"]*)"[^>]*>([\s\S]*?)</a>');
+    final RegExp cardRegExp = RegExp(
+      '<a class="directory-card"[^>]*?title="([^"]*)"[^>]*?href="/$segment/([^"]*)"[^>]*>([\\s\\S]*?)</a>',
+    );
     for (final Match match in cardRegExp.allMatches(html)) {
       final String label = unescapeHtml(match.group(1) ?? '').trim();
       final String slug = (match.group(2) ?? '').trim();
@@ -134,6 +137,12 @@ class EightMusesParser {
     tags.sort((EightMusesTag a, EightMusesTag b) => b.count.compareTo(a.count));
     return tags;
   }
+
+  /// Tag directory (`/genres`): 120 tags with their gallery counts.
+  static List<EightMusesTag> parseTags(String html) => _parseDirectory(html, 'tag');
+
+  /// Artist directory (`/artists`): featured artists with their gallery counts.
+  static List<EightMusesTag> parseArtists(String html) => _parseDirectory(html, 'artist');
 
   /// Map of gallery id -> page count, taken from the RSC payload of a listing.
   ///

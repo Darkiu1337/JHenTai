@@ -140,7 +140,7 @@ class EightMusesPage extends StatelessWidget {
       child: CustomScrollView(
         controller: logic.state.scrollController,
         slivers: [
-          if (config.isTagMode) SliverToBoxAdapter(child: _buildFilterHint(context, logic)),
+          if (config.isLocalFilterMode) SliverToBoxAdapter(child: _buildFilterHint(context, logic)),
           if (logic.state.galleries.isEmpty && logic.state.loadingState == LoadingState.loading)
             const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator())),
           SliverPadding(
@@ -176,17 +176,17 @@ class EightMusesPage extends StatelessWidget {
 
   Widget _buildFilterHint(BuildContext context, EightMusesLogic logic) {
     final EightMusesSearchConfig config = logic.state.config;
-    final String tag = config.includeTags.first.label;
+    final String source = config.artist?.label ?? config.includeTags.first.label;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Row(
         children: [
-          const Icon(Icons.filter_alt_outlined, size: 16),
+          Icon(config.artist != null ? Icons.person_outline : Icons.filter_alt_outlined, size: 16),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              '${'filteringWithin'.tr} "$tag" — ${logic.state.galleries.length}/${logic.state.scannedCards}',
+              '${'filteringWithin'.tr} "$source" — ${logic.state.galleries.length}/${logic.state.scannedCards}',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12, color: UIConfig.galleryCardTextColor(context)),

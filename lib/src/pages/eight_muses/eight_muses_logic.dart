@@ -135,8 +135,7 @@ class EightMusesLogic extends GetxController {
     state.config.excludeTags
       ..clear()
       ..addAll(config.excludeTags);
-    state.config.contentType = config.contentType;
-    state.config.language = config.language;
+    state.config.artist = config.artist;
     state.config.sort = config.sort;
 
     _hideSuggestions();
@@ -163,8 +162,6 @@ class EightMusesLogic extends GetxController {
 
     state.config.keyword = '';
     state.searchController.clear();
-    state.config.contentType = EightMusesContentType.all;
-    state.config.language = EightMusesLanguage.all;
     state.config.sort = EightMusesSort.relevance;
 
     _hideSuggestions();
@@ -188,19 +185,18 @@ class EightMusesLogic extends GetxController {
     update([bodyId, searchBarId]);
   }
 
-  Future<void> setContentType(EightMusesContentType value) async {
-    if (state.config.contentType == value) {
+  /// Selects (or clears, when null) the artist whose listing is shown.
+  Future<void> selectArtist(EightMusesTag? artist) async {
+    if (state.config.artist == artist) {
       return;
     }
-    state.config.contentType = value;
-    await refresh();
-  }
 
-  Future<void> setLanguage(EightMusesLanguage value) async {
-    if (state.config.language == value) {
-      return;
-    }
-    state.config.language = value;
+    state.config.artist = artist;
+    state.config.keyword = '';
+    state.searchController.clear();
+    state.config.sort = EightMusesSort.relevance;
+
+    _hideSuggestions();
     await refresh();
   }
 
@@ -257,11 +253,11 @@ class EightMusesLogic extends GetxController {
           break;
         }
 
-        final List<Gallery> filtered = state.config.isTagMode ? _applyLocalFilters(raw) : raw;
+        final List<Gallery> filtered = state.config.isLocalFilterMode ? _applyLocalFilters(raw) : raw;
         state.galleries.addAll(filtered);
 
         final bool isLastPage = raw.length < expectedPageSize;
-        if (filtered.isNotEmpty || !state.config.isTagMode || isLastPage) {
+        if (filtered.isNotEmpty || !state.config.isLocalFilterMode || isLastPage) {
           state.loadingState = isLastPage ? LoadingState.noMore : LoadingState.idle;
           break;
         }
@@ -282,16 +278,22 @@ class EightMusesLogic extends GetxController {
     update([bodyId]);
   }
 
-  int get _expectedPageSize => state.config.isTagMode || !state.config.isSearching ? 48 : 24;
+  int get _expectedPageSize => state.config.isLocalFilterMode || !state.config.isSearching ? 48 : 24;
 
   Future<List<Gallery>> _fetchPage(int page) {
     final EightMusesSearchConfig config = state.config;
+
+    /// The artist listing is the most specific base, and its pages carry the
+    /// genres of every gallery, so tags/keyword can still be applied locally.
+    if (config.artist != null) {
+      return eightMusesRequest.requestArtistPage(artistSlug: config.artist!.slug, page: page);
+    }
 
     if (config.isTagMode) {
       return eightMusesRequest.requestTagPage(tagSlug: config.includeTags.first.slug, page: page);
     }
 
-    if (config.hasKeyword || config.contentType != EightMusesContentType.all || config.language != EightMusesLanguage.all) {
+    if (config.hasKeyword) {
       return eightMusesRequest.search(config: config, page: page);
     }
 
@@ -300,11 +302,14 @@ class EightMusesLogic extends GetxController {
 
   /// Applies the tags/keyword that the site request could not express.
   ///
-  /// The first include tag is guaranteed by `/tag/<slug>`, so only the
-  /// remaining include tags are intersected here.
+  /// On a tag listing the first include tag is guaranteed by `/tag/<slug>`, so
+  /// only the remaining ones are intersected here. On an artist listing every
+  /// include tag is applied locally.
   List<Gallery> _applyLocalFilters(List<Gallery> galleries) {
     final EightMusesSearchConfig config = state.config;
-    final List<String> extraIncludes = config.includeTags.skip(1).map((EightMusesTag tag) => tag.normalizedLabel).toList();
+    final List<String> includes = (config.isTagMode ? config.includeTags.skip(1) : config.includeTags)
+        .map((EightMusesTag tag) => tag.normalizedLabel)
+        .toList();
     final List<String> excludes = config.excludeTags.map((EightMusesTag tag) => tag.normalizedLabel).toList();
     final List<String> tokens = config.keyword
         .toLowerCase()
@@ -313,14 +318,14 @@ class EightMusesLogic extends GetxController {
         .where((String token) => token.isNotEmpty)
         .toList();
 
-    if (extraIncludes.isEmpty && excludes.isEmpty && tokens.isEmpty) {
+    if (includes.isEmpty && excludes.isEmpty && tokens.isEmpty) {
       return galleries;
     }
 
     return galleries.where((Gallery gallery) {
       final Set<String> genres = gallery.externalTags.map(EightMusesTag.normalizeTagLabel).toSet();
 
-      if (extraIncludes.any((String label) => !genres.contains(label))) {
+      if (includes.any((String label) => !genres.contains(label))) {
         return false;
       }
 
