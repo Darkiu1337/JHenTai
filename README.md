@@ -259,6 +259,11 @@ Cloudflare clearance.
 -   **Gallery detail**: cover, author, page count, description and the **real
     tags** of the gallery; each tag is clickable and *adds* to the current tag
     filter. Read or download from the same page.
+-   **Page preview**: a lazy thumbnail grid of every page below the details
+    (same style/settings as the E-H detail grid). Tapping a thumbnail opens the
+    reader **on that page**; the saved reading position is highlighted. If the
+    site's thumbnail CDN refuses a request, the tile falls back to the full page
+    image.
 -   **The reader and downloads are the E-H ones**: zoom, 2× upscale, keyboard,
     thumbnail strip, reading progress, history and the external viewer all work,
     because the page list (`/api/legacy-media/<id>/<n>`) is resolved up front.
