@@ -85,25 +85,32 @@ class LocalFavoriteService {
     ensureRestored();
 
     /// Re-adding refreshes the stored snapshot (title, cover, page count).
-    favorites.removeWhere((Gallery e) => e.gid == gallery.gid);
-    favorites.insert(0, gallery);
+    /// Replace the list in one assignment so observers are notified once, with
+    /// the final list (a remove-then-insert pair used to notify in between).
+    final List<Gallery> next = List<Gallery>.of(favorites)
+      ..removeWhere((Gallery e) => e.gid == gallery.gid)
+      ..insert(0, gallery);
+
+    favorites.value = next;
 
     await _persist();
   }
 
   Future<void> remove(int gid) async {
     ensureRestored();
-    final int length = favorites.length;
-    favorites.removeWhere((Gallery e) => e.gid == gid);
-
-    if (favorites.length != length) {
-      await _persist();
+    if (!favorites.any((Gallery e) => e.gid == gid)) {
+      return;
     }
+
+    final List<Gallery> next = List<Gallery>.of(favorites)..removeWhere((Gallery e) => e.gid == gid);
+    favorites.value = next;
+
+    await _persist();
   }
 
   Future<void> clear() async {
     ensureRestored();
-    favorites.clear();
+    favorites.value = <Gallery>[];
     await _persist();
   }
 

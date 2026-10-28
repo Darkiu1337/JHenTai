@@ -84,28 +84,39 @@ class AlreadyReadService {
   Future<void> add(GalleryHistoryModel gallery) async {
     ensureRestored();
 
-    galleries.removeWhere((GalleryHistoryModel e) => e.galleryUrl.gid == gallery.galleryUrl.gid);
-    galleries.insert(0, gallery);
+    final List<GalleryHistoryModel> next = List<GalleryHistoryModel>.of(galleries);
+    next.removeWhere((GalleryHistoryModel e) => e.galleryUrl.gid == gallery.galleryUrl.gid);
+    next.insert(0, gallery);
+
+    /// Update both stores before notifying, and notify exactly once: listeners
+    /// reload synchronously, so they must observe the final list (the first
+    /// notification of a remove-then-insert sequence used to be delivered while
+    /// the new gallery was still missing).
     gids.add(gallery.galleryUrl.gid);
+    galleries.value = next;
 
     await _persist();
   }
 
   Future<void> remove(int gid) async {
     ensureRestored();
-    final int length = galleries.length;
-    galleries.removeWhere((GalleryHistoryModel e) => e.galleryUrl.gid == gid);
-
-    if (galleries.length != length) {
-      gids.remove(gid);
-      await _persist();
+    if (!gids.contains(gid)) {
+      return;
     }
+
+    final List<GalleryHistoryModel> next = List<GalleryHistoryModel>.of(galleries)
+      ..removeWhere((GalleryHistoryModel e) => e.galleryUrl.gid == gid);
+
+    gids.remove(gid);
+    galleries.value = next;
+
+    await _persist();
   }
 
   Future<void> clear() async {
     ensureRestored();
-    galleries.clear();
     gids.clear();
+    galleries.value = <GalleryHistoryModel>[];
     await _persist();
   }
 
