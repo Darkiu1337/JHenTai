@@ -18,6 +18,14 @@ A manga app for E-Hentai, supporting Android & iOS & Windows & MacOS & Linux.
 
 Still in development stage, welcome to submit issues or feature requests.
 
+> ### 🍴 This repository is a fork
+>
+> `Darkiu1337/JHenTai` keeps upstream behaviour and adds the reader improvements,
+> the external image viewer, the complete pt-BR locale and the **8muses** gallery
+> source. See [Fork changes](#fork-changes). Windows builds of this fork are
+> produced by the `Build Windows (reader)` GitHub Actions workflow
+> (artifact `JHenTai-Windows-reader`).
+
 ## Download & Install
 
 [<img src="https://raw.githubusercontent.com/jiangtian616/JHenTai/master/badges/download_from_github.png" 
@@ -183,6 +191,84 @@ mush thanks to these projects and people🙇‍
 -   [x] vote for Tag, watch and hidden tags
 -   [x] comment, vote for comment
 -   [x] Fingerprint unlock
+
+> Fork-only features (reader fixes, 2× upscale, external viewer, 8muses source,
+> pt-BR) are described in [Fork changes](#fork-changes).
+
+## Fork changes
+
+This fork keeps the E-Hentai client untouched and layers the following on top.
+
+### Windows build (GitHub Actions)
+
+`.github/workflows/build-windows-reader.yml` builds on `windows-2022` (Flutter
+`3.44.8`) for pushes to `master`, `reader-features`, `reader-external` and
+`eightmuses`, and uploads the artifact **`JHenTai-Windows-reader`**
+(`JHenTai_<version>_Windows_reader.zip`). Unpack it and run `jhentai.exe`.
+
+### Reader
+
+-   **Zoom is kept between pages** (single page, double column and lists): every
+    page is created already at the current scale and aligned to the top, including
+    preloaded neighbours, so a swipe never shows a 1.0× frame first.
+-   **Back to the top when turning the page** (Settings → Read), clamped against
+    the real content size instead of the viewport.
+-   **Keyboard**: `Ctrl+←/→` pans horizontally, `↑/↓` pans vertically, `+`/`-`
+    zooms by the configured step (5/8/12/20%), all with key repeat.
+-   **`photo_view` is vendored** in `packages/photo_view`: initial-scale seeding,
+    multiplicative `Ctrl`+wheel zoom anchored on the cursor, 1.2 tap-drag
+    sensitivity and a ×1.5 double-click step.
+-   **Loading placeholders do not zoom**; they stay centred and at normal size.
+-   **2× upscale of the current page**: Catmull-Rom bicubic + AMD FidelityFX CAS
+    fragment shaders with an LRU cache, so balloon text stays sharp at high zoom
+    (Settings → Read).
+-   **External image viewer**: right-click → *Open in external viewer* (nomacs,
+    ImageGlass, XnView, any `.exe`). Online galleries stream page by page into
+    `%TEMP%\jhentai_viewer\...` with a progress overlay and automatic cleanup.
+
+### 8muses source
+
+A second, independent source for western comics that cannot be posted on
+E-Hentai. It does not touch any E-H code path and needs no login, cookie or
+Cloudflare clearance.
+
+-   New tab with the 8muses brand mark (drawn with a painter, no asset):
+    *Popular*, *Latest*, *Browse all* and an inline search bar (no dialog).
+-   **Keyword search** with content type (`manga`, `doujinshi`, `western`,
+    `image-set`, `artist-cg`, `game-cg`), language (`en`/`ja`/`es`/`fr`/`ko`/`de`/`ru`)
+    and sort (*best match*, *newest*, *most viewed*) — all server-side.
+-   **Tag search**: the 120 tags of `/genres` (with gallery counts) in a filter
+    panel, supporting **include and exclude**. The first included tag is sent to
+    the site (`/tag/<slug>`); the remaining tags and an extra keyword are
+    intersected locally, and the footer shows
+    *Filtering within "<tag>" — shown/scanned*. Type/language/sort only apply to
+    keyword searches because the site cannot combine them with a tag.
+-   **Recent searches** and **popular tags** are suggested when the field is
+    focused.
+-   **Gallery detail**: cover, author, page count, description and the **real
+    tags** of the gallery; each tag is clickable and *adds* to the current tag
+    filter. Read or download from the same page.
+-   **The reader and downloads are the E-H ones**: zoom, 2× upscale, keyboard,
+    thumbnail strip, reading progress, history and the external viewer all work,
+    because the page list (`/api/legacy-media/<id>/<n>`) is resolved up front.
+-   Clipboard, `-g <url>` and the share intent open the 8muses detail page
+    directly (no E-H login required).
+
+Known limitations:
+
+-   No de-duplication against E-Hentai: the same work may appear as two galleries.
+-   8muses exposes at most **5 tags per gallery** (site limitation).
+-   Multi-tag filtering is local, so rare intersections may need *Load more*.
+-   The site mirrors `8muses.com` and `allporncomic.com`, so coverage of a given
+    artist is partial.
+
+### Localization
+
+-   Complete **pt-BR** translation (824 keys) with corrected wording and
+    consistent terminology; the new 8muses strings exist in all six locales.
+-   Two long-standing i18n issues fixed: the duplicated `quickSearch` key was
+    split into `quickSearchConfig`, and keys that used to render raw were added
+    to every locale.
 
 ## Translation
 

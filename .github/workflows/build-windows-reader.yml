@@ -3,6 +3,7 @@ name: Build Windows (reader)
 on:
   push:
     branches:
+      - master
       - reader-features
       - reader-external
       - eightmuses
