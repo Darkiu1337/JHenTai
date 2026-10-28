@@ -1003,6 +1003,13 @@ class ru_RU {
       'bestMatch': 'Лучшее совпадение',
       'mostViewed': 'Самые просматриваемые',
       'loadMore': 'Загрузить ещё',
+      'localFavorites': 'Локальные избранные',
+      'addToLocalFavorites': 'Добавить в локальные избранные',
+      'removeFromLocalFavorites': 'Удалить из локальных избранных',
+      'localFavoriteAdded': 'Добавлено в локальные избранные',
+      'localFavoriteRemoved': 'Удалено из локальных избранных',
+      'noLocalFavorites': 'Локальных избранных пока нет',
+      'noLocalFavoritesHint': 'Откройте галерею 8muses и нажмите на сердечко, чтобы сохранить её здесь.',
     };
   }
 }

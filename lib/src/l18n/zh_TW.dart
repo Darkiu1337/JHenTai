@@ -1000,6 +1000,13 @@ favnote：配對收藏備註
       'bestMatch': '最佳符合',
       'mostViewed': '最多瀏覽',
       'loadMore': '載入更多',
+      'localFavorites': '本機收藏',
+      'addToLocalFavorites': '加入本機收藏',
+      'removeFromLocalFavorites': '從本機收藏中移除',
+      'localFavoriteAdded': '已加入本機收藏',
+      'localFavoriteRemoved': '已從本機收藏中移除',
+      'noLocalFavorites': '尚無本機收藏',
+      'noLocalFavoritesHint': '開啟 8muses 畫廊並點擊愛心圖示即可收藏到此處。',
     };
   }
 }

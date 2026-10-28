@@ -249,7 +249,13 @@ Cloudflare clearance.
 -   Sorting only applies to keyword searches; tag/artist listings are ordered by
     the site.
 -   **Recent searches** and **popular tags** are suggested when the field is
-    focused.
+    focused; each recent search has a ✕ to remove it (and *Delete all* clears the
+    list).
+-   **Local favorites**: the heart on a grid card, its right-click/long-press
+    menu or the gallery detail page saves the gallery to a local list (no login,
+    no E-H slot). The *Favorites* page has an `E-Hentai`/`Local favorites`
+    switcher, and the local list opens in local mode automatically when you are
+    logged out. Stored in the local GetStorage file, newest first.
 -   **Gallery detail**: cover, author, page count, description and the **real
     tags** of the gallery; each tag is clickable and *adds* to the current tag
     filter. Read or download from the same page.

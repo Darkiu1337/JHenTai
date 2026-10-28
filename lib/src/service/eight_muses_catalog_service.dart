@@ -126,6 +126,16 @@ class EightMusesCatalogService {
 
   Future<void> clearRecentSearches() => storageService.write(_recentSearchesKey, jsonEncode(<String>[]));
 
+  Future<void> removeRecentSearch(String keyword) async {
+    final String normalized = keyword.trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    final List<String> recent = readRecentSearches()..removeWhere((String e) => e.toLowerCase() == normalized.toLowerCase());
+    await storageService.write(_recentSearchesKey, jsonEncode(recent));
+  }
+
   void _restore() {
     if (_restored) {
       return;

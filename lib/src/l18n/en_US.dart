@@ -1004,6 +1004,13 @@ Example 2: Block comments with a score not exceeding 10————Comment Score
       'bestMatch': 'Best match',
       'mostViewed': 'Most viewed',
       'loadMore': 'Load more',
+      'localFavorites': 'Local favorites',
+      'addToLocalFavorites': 'Add to local favorites',
+      'removeFromLocalFavorites': 'Remove from local favorites',
+      'localFavoriteAdded': 'Added to local favorites',
+      'localFavoriteRemoved': 'Removed from local favorites',
+      'noLocalFavorites': 'No local favorites yet',
+      'noLocalFavoritesHint': 'Open an 8muses gallery and tap the heart to keep it here.',
     };
   }
 }

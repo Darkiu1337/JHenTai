@@ -14,6 +14,7 @@ import 'package:jhentai/src/pages/eight_muses/eight_muses_logic.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_download_service.dart';
 import 'package:jhentai/src/service/history_service.dart';
+import 'package:jhentai/src/service/local_favorite_service.dart';
 import 'package:jhentai/src/service/log.dart';
 import 'package:jhentai/src/service/read_progress_service.dart';
 import 'package:jhentai/src/setting/download_setting.dart';
@@ -49,6 +50,8 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
   @override
   void initState() {
     super.initState();
+
+    localFavoriteService.ensureRestored();
 
     /// Set before the first build: calling setState from initState would run
     /// while the framework is still building the parent.
@@ -198,6 +201,30 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
     toast('copySuccess'.tr);
   }
 
+  /// Best snapshot available: the detail page holds more metadata than the
+  /// listing card, so refresh the stored copy whenever it is loaded.
+  Gallery _favoriteSnapshot() {
+    final EightMusesDetail? loaded = detail;
+    if (loaded == null) {
+      return gallery;
+    }
+
+    return gallery.copyWith(
+      title: loaded.title,
+      pageCount: loaded.pageCount,
+      rating: loaded.rating,
+      uploader: loaded.author.isEmpty ? gallery.uploader : loaded.author,
+      publishTime: loaded.publishTime,
+      externalTags: loaded.tagLabels,
+      language: 'EN',
+    );
+  }
+
+  Future<void> _toggleLocalFavorite() async {
+    final bool added = await localFavoriteService.toggle(_favoriteSnapshot());
+    toast(added ? 'localFavoriteAdded'.tr : 'localFavoriteRemoved'.tr);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,6 +243,17 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
           ],
         ),
         actions: [
+          Obx(() {
+            final bool isFavorite = localFavoriteService.contains(gallery.gid);
+            return IconButton(
+              tooltip: isFavorite ? 'removeFromLocalFavorites'.tr : 'addToLocalFavorites'.tr,
+              icon: Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: isFavorite ? Colors.redAccent : null,
+              ),
+              onPressed: _toggleLocalFavorite,
+            );
+          }),
           IconButton(
             tooltip: 'openInBrowser'.tr,
             icon: const Icon(Icons.open_in_browser),

@@ -993,6 +993,13 @@ Example 2: Block comments with a score not exceeding 10————Comment Score
       'bestMatch': '최적 일치',
       'mostViewed': '최다 조회',
       'loadMore': '더 불러오기',
+      'localFavorites': '로컬 즐겨찾기',
+      'addToLocalFavorites': '로컬 즐겨찾기에 추가',
+      'removeFromLocalFavorites': '로컬 즐겨찾기에서 제거',
+      'localFavoriteAdded': '로컬 즐겨찾기에 추가됨',
+      'localFavoriteRemoved': '로컬 즐겨찾기에서 제거됨',
+      'noLocalFavorites': '아직 로컬 즐겨찾기가 없습니다',
+      'noLocalFavoritesHint': '8muses 갤러리를 열고 하트를 눌러 여기에 저장하세요.',
     };
   }
 }

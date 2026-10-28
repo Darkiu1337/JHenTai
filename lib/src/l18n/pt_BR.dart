@@ -1004,6 +1004,13 @@ Exemplo 2: Bloquear comentários com pontuação não superior a 10————C
       'bestMatch': 'Melhor correspondência',
       'mostViewed': 'Mais vistos',
       'loadMore': 'Carregar mais',
+      'localFavorites': 'Favoritos locais',
+      'addToLocalFavorites': 'Adicionar aos favoritos locais',
+      'removeFromLocalFavorites': 'Remover dos favoritos locais',
+      'localFavoriteAdded': 'Adicionado aos favoritos locais',
+      'localFavoriteRemoved': 'Removido dos favoritos locais',
+      'noLocalFavorites': 'Nenhum favorito local ainda',
+      'noLocalFavoritesHint': 'Abra uma galeria do 8muses e toque no coração para guardá-la aqui.',
     };
   }
 }

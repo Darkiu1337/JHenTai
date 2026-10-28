@@ -5,6 +5,7 @@ import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/network/eight_muses_request.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_state.dart';
 import 'package:jhentai/src/service/eight_muses_catalog_service.dart';
+import 'package:jhentai/src/service/local_favorite_service.dart';
 import 'package:jhentai/src/service/log.dart';
 import 'package:jhentai/src/utils/snack_util.dart';
 import 'package:jhentai/src/widget/loading_state_indicator.dart';
@@ -29,6 +30,8 @@ class EightMusesLogic extends GetxController {
   void onInit() {
     super.onInit();
 
+    localFavoriteService.ensureRestored();
+
     state.searchFocusNode.addListener(_onFocusChanged);
     loadMore();
   }
@@ -43,6 +46,16 @@ class EightMusesLogic extends GetxController {
   }
 
   List<String> get recentSearches => eightMusesCatalogService.readRecentSearches();
+
+  Future<void> removeRecentSearch(String keyword) async {
+    await eightMusesCatalogService.removeRecentSearch(keyword);
+    update([bodyId]);
+  }
+
+  Future<void> clearRecentSearches() async {
+    await eightMusesCatalogService.clearRecentSearches();
+    update([bodyId]);
+  }
 
   List<EightMusesTag> get popularTags => eightMusesCatalogService.tags.take(12).toList();
 

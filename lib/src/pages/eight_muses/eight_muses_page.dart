@@ -6,7 +6,10 @@ import 'package:jhentai/src/model/eight_muses_search.dart';
 import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_logic.dart';
 import 'package:jhentai/src/routes/routes.dart';
+import 'package:jhentai/src/service/local_favorite_service.dart';
 import 'package:jhentai/src/utils/route_util.dart';
+import 'package:jhentai/src/utils/toast_util.dart';
+import 'package:jhentai/src/widget/eh_context_menu.dart';
 import 'package:jhentai/src/widget/eight_muses_card.dart';
 import 'package:jhentai/src/widget/eight_muses_filter_sheet.dart';
 import 'package:jhentai/src/widget/eight_muses_mark.dart';
@@ -88,15 +91,26 @@ class EightMusesPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (recent.isNotEmpty) ...[
-            _sectionTitle(context, 'recentSearches'.tr),
+            Row(
+              children: [
+                Expanded(child: _sectionTitle(context, 'recentSearches'.tr)),
+                TextButton(
+                  onPressed: logic.clearRecentSearches,
+                  child: Text('deleteAll'.tr),
+                ),
+              ],
+            ),
             Wrap(
               spacing: 8,
               runSpacing: 4,
               children: [
                 for (final String keyword in recent)
-                  ActionChip(
+                  InputChip(
                     label: Text(keyword),
                     onPressed: () => logic.submitKeyword(keyword),
+                    onDeleted: () => logic.removeRecentSearch(keyword),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    deleteButtonTooltipMessage: 'delete'.tr,
                   ),
               ],
             ),
@@ -159,10 +173,16 @@ class EightMusesPage extends StatelessWidget {
                   }
 
                   final Gallery gallery = logic.state.galleries[index];
-                  return EightMusesCard(
-                    gallery: gallery,
-                    onTap: () => toRoute(Routes.eightMusesDetails, arguments: gallery),
-                  );
+                  return Obx(() {
+                    final bool isFavorite = localFavoriteService.contains(gallery.gid);
+                    return EightMusesCard(
+                      gallery: gallery,
+                      isFavorite: isFavorite,
+                      onTap: () => toRoute(Routes.eightMusesDetails, arguments: gallery),
+                      onLongPress: () => _showCardMenu(context, gallery),
+                      onSecondaryTap: (Offset position) => _showCardMenu(context, gallery, position: position),
+                    );
+                  });
                 },
                 childCount: logic.state.galleries.length,
               ),
@@ -172,6 +192,29 @@ class EightMusesPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Long-press/right-click menu of a grid card: toggles the local favorite
+  /// without opening the detail page.
+  void _showCardMenu(BuildContext context, Gallery gallery, {Offset? position}) {
+    final bool isFavorite = localFavoriteService.contains(gallery.gid);
+
+    showEHContextMenu(
+      context,
+      position: position,
+      actions: [
+        EHContextMenuAction(
+          text: isFavorite ? 'removeFromLocalFavorites'.tr : 'addToLocalFavorites'.tr,
+          icon: Icon(isFavorite ? Icons.favorite_border : Icons.favorite, size: 18),
+          onTap: () => _toggleLocalFavorite(gallery),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _toggleLocalFavorite(Gallery gallery) async {
+    final bool added = await localFavoriteService.toggle(gallery);
+    toast(added ? 'localFavoriteAdded'.tr : 'localFavoriteRemoved'.tr);
   }
 
   Widget _buildFilterHint(BuildContext context, EightMusesLogic logic) {

@@ -999,6 +999,13 @@ favnote：匹配收藏备注
       'bestMatch': '最佳匹配',
       'mostViewed': '最多浏览',
       'loadMore': '加载更多',
+      'localFavorites': '本地收藏',
+      'addToLocalFavorites': '添加到本地收藏',
+      'removeFromLocalFavorites': '从本地收藏中移除',
+      'localFavoriteAdded': '已添加到本地收藏',
+      'localFavoriteRemoved': '已从本地收藏中移除',
+      'noLocalFavorites': '还没有本地收藏',
+      'noLocalFavoritesHint': '打开 8muses 画廊并点击心形图标即可收藏到这里。',
     };
   }
 }
