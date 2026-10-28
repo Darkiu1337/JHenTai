@@ -160,7 +160,6 @@ class ExternalViewerService with JHLifeCircleBeanErrorCatch implements JHLifeCir
       _tempRootName,
       '${galleryKey}_${DateTime.now().millisecondsSinceEpoch}',
     ));
-    await dir.create(recursive: true);
 
     final _ExternalViewerSession session = _ExternalViewerSession(
       galleryKey: galleryKey,
@@ -170,9 +169,21 @@ class ExternalViewerService with JHLifeCircleBeanErrorCatch implements JHLifeCir
       startIndex: startIndex,
       resolveImage: resolveImage,
     );
+
+    /// Register the session before creating the folder so the periodic orphan
+    /// sweep cannot see an unowned directory during the async gap.
     _sessions[galleryKey] = session;
     _progressGalleryKey = galleryKey;
     _updateProgress(session, ExternalViewerStage.preparing);
+
+    try {
+      await dir.create(recursive: true);
+    } catch (e) {
+      log.error('Create external viewer temp folder failed', e);
+      await _finishSession(session, deleteDirectory: true);
+      toast('externalViewerPrepareFailed'.tr, isShort: false);
+      return;
+    }
 
     final File? first = await _ensurePage(session, startIndex);
     if (first == null) {

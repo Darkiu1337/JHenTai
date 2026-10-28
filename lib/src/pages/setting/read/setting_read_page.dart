@@ -886,7 +886,7 @@ class _ExternalViewerCleanupTileState extends State<_ExternalViewerCleanupTile> 
 
   Future<void> _delete() async {
     final bool? confirmed = await Get.dialog<bool>(EHDialog(title: 'externalViewerCleanupConfirm'.tr));
-    if (confirmed != true) {
+    if (!mounted || confirmed != true) {
       return;
     }
 
