@@ -185,7 +185,13 @@ class ExternalViewerService with JHLifeCircleBeanErrorCatch implements JHLifeCir
       return;
     }
 
-    final File? first = await _ensurePage(session, startIndex);
+    File? first;
+    try {
+      first = await _ensurePage(session, startIndex);
+    } catch (e) {
+      log.error('Prepare external viewer page failed', e);
+      first = null;
+    }
     if (first == null) {
       await _finishSession(session, deleteDirectory: true);
       toast('externalViewerPrepareFailed'.tr, isShort: false);
@@ -194,7 +200,11 @@ class ExternalViewerService with JHLifeCircleBeanErrorCatch implements JHLifeCir
 
     final bool stream = _shouldStream(viewerPath);
     if (!stream) {
-      await _downloadRemaining(session);
+      try {
+        await _downloadRemaining(session);
+      } catch (e) {
+        log.error('Download pages for the external viewer failed', e);
+      }
       if (session.cancelled) {
         await _finishSession(session, deleteDirectory: true);
         return;
@@ -276,24 +286,34 @@ class ExternalViewerService with JHLifeCircleBeanErrorCatch implements JHLifeCir
   /// Deletes every temporary folder that is not being used by an active
   /// session. Returns the number of bytes freed.
   Future<int> clearAllTempFolders() async {
+    final String? viewerPath = _configuredViewerPath();
+    final bool? viewerRunning = viewerPath == null ? null : await _isViewerProcessRunning(viewerPath);
     final bool? nomacsRunning = await _isNomacsRunning();
+    final DateTime cutoff = DateTime.now().subtract(const Duration(hours: 24));
+
     int freed = 0;
     for (final String rootName in <String>[_tempRootName, _legacyTempRootName]) {
-      /// The old nomacs build may still be showing a folder from its own temp
-      /// root. Do not delete it while that process is alive.
-      if (rootName == _legacyTempRootName && nomacsRunning == true) {
-        continue;
-      }
-
       final Directory root = Directory(p.join(pathService.tempDir.path, rootName));
       if (!await root.exists()) {
         continue;
       }
 
+      final bool? rootViewerRunning = rootName == _legacyTempRootName ? nomacsRunning : viewerRunning;
+
       await for (final FileSystemEntity entity in root.list()) {
         if (entity is! Directory || _isActiveSessionDirectory(entity.path)) {
           continue;
         }
+
+        /// While a viewer is (or may be) running, only remove folders old
+        /// enough that they cannot belong to the current viewing session.
+        if (rootViewerRunning != false) {
+          final bool old = (await entity.stat()).modified.isBefore(cutoff);
+          if (!old) {
+            continue;
+          }
+        }
+
         freed += await _directorySize(entity);
         await _deleteDirectory(entity);
       }
@@ -602,10 +622,18 @@ class ExternalViewerService with JHLifeCircleBeanErrorCatch implements JHLifeCir
       return null;
     }
 
-    final String ext = _extensionOf(image.url);
+    final String ext;
+    final String url;
+    try {
+      ext = _extensionOf(image.url);
+      url = _normalizeUrl(image.url);
+    } catch (e) {
+      log.error('Invalid image URL for the external viewer, page ${index + 1}', e);
+      return null;
+    }
+
     final File target = File(p.join(session.dir.path, '$base$ext'));
     final File part = File('${target.path}.part');
-    final String url = _normalizeUrl(image.url);
 
     try {
       /// The reader has usually cached the image already. Using that cache
