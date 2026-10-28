@@ -18,6 +18,7 @@ import 'package:jhentai/src/service/local_favorite_service.dart';
 import 'package:jhentai/src/service/log.dart';
 import 'package:jhentai/src/service/read_progress_service.dart';
 import 'package:jhentai/src/setting/download_setting.dart';
+import 'package:jhentai/src/setting/style_setting.dart';
 import 'package:jhentai/src/utils/eight_muses_parser.dart';
 import 'package:jhentai/src/utils/route_util.dart';
 import 'package:jhentai/src/utils/toast_util.dart';
@@ -44,6 +45,9 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
   EightMusesDetail? detail;
   LoadingState loadingState = LoadingState.idle;
   String? errorMessage;
+
+  /// Page the reader will resume at, highlighted in the preview grid.
+  int? lastReadIndex;
 
   int get externalId => gallery.galleryUrl.externalId!;
 
@@ -93,6 +97,19 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
           tags: loaded.tagLabels,
         ),
       );
+
+      try {
+        final int readIndex = await readProgressService.getReadProgress(gallery.galleryUrl.gid);
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          lastReadIndex = readIndex > 0 && readIndex < loaded.pageCount ? readIndex : null;
+        });
+      } catch (e) {
+        log.error('Load 8muses read progress failed', e);
+      }
     } catch (e, s) {
       log.error('Load 8muses gallery #$externalId failed', e, s);
       if (!mounted) {
@@ -108,25 +125,14 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
 
   /// The site exposes every page through a deterministic url, so the reader
   /// receives a fully resolved image list and never parses E-H pages.
-  Future<void> _openRead() async {
+  Future<void> _openRead({int? initialIndex}) async {
     final EightMusesDetail? loaded = detail;
     if (loaded == null) {
       return;
     }
 
-    final List<GalleryImage> images = List<GalleryImage>.generate(
-      loaded.pageCount,
-      (int index) => GalleryImage(url: EightMusesParser.pageUrl(loaded.id, index + 1)),
-    );
-
-    final List<GalleryThumbnail> thumbnails = List<GalleryThumbnail>.generate(
-      loaded.pageCount,
-      (int index) => GalleryThumbnail(
-        href: images[index].url,
-        isLarge: true,
-        thumbUrl: EightMusesParser.thumbUrl(loaded.id, index + 1),
-      ),
-    );
+    final List<GalleryImage> images = _images(loaded);
+    final List<GalleryThumbnail> thumbnails = _thumbnails(loaded);
 
     final int recordIndex = await readProgressService.getReadProgress(gallery.galleryUrl.gid);
 
@@ -138,12 +144,30 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
         token: gallery.galleryUrl.token,
         galleryTitle: loaded.title,
         galleryUrl: gallery.galleryUrl.url,
-        initialIndex: recordIndex < loaded.pageCount ? recordIndex : 0,
+        initialIndex: initialIndex ?? (recordIndex < loaded.pageCount ? recordIndex : 0),
         readProgressRecordStorageKey: gallery.galleryUrl.gid.toString(),
         pageCount: loaded.pageCount,
         images: images,
         thumbnails: thumbnails,
         useSuperResolution: false,
+      ),
+    );
+  }
+
+  List<GalleryImage> _images(EightMusesDetail loaded) {
+    return List<GalleryImage>.generate(
+      loaded.pageCount,
+      (int index) => GalleryImage(url: EightMusesParser.pageUrl(loaded.id, index + 1)),
+    );
+  }
+
+  List<GalleryThumbnail> _thumbnails(EightMusesDetail loaded) {
+    return List<GalleryThumbnail>.generate(
+      loaded.pageCount,
+      (int index) => GalleryThumbnail(
+        href: EightMusesParser.pageUrl(loaded.id, index + 1),
+        isLarge: true,
+        thumbUrl: EightMusesParser.thumbUrl(loaded.id, index + 1),
       ),
     );
   }
@@ -296,44 +320,145 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
 
     final EightMusesDetail loaded = detail!;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final Widget cover = ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: EHImage(
-                galleryImage: GalleryImage(url: EightMusesParser.coverUrl(loaded.id)),
-                containerWidth: 200,
-                containerHeight: 267,
-                fit: BoxFit.cover,
-                borderRadius: BorderRadius.circular(10),
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverToBoxAdapter(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final Widget cover = ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: EHImage(
+                    galleryImage: GalleryImage(url: EightMusesParser.coverUrl(loaded.id)),
+                    containerWidth: 200,
+                    containerHeight: 267,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                );
+
+                final Widget info = _buildInfo(context, loaded);
+
+                if (constraints.maxWidth < 560) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(child: cover),
+                      const SizedBox(height: 16),
+                      info,
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    cover,
+                    const SizedBox(width: 16),
+                    Expanded(child: info),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(child: _buildPreviewHeader(context, loaded)),
+        _buildPreviewGrid(context, loaded),
+      ],
+    );
+  }
+
+  Widget _buildPreviewHeader(BuildContext context, EightMusesDetail loaded) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+      child: Row(
+        children: [
+          Text('preview'.tr, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(width: 8),
+          Text(
+            '${loaded.pageCount} ${'pageCount'.tr}',
+            style: TextStyle(color: UIConfig.galleryCardTextColor(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Thumbnail grid of every page. Tapping a cell opens the reader at that
+  /// page, so a specific page can be previewed and started from.
+  ///
+  /// The cells are built lazily by [SliverGrid]: only the visible thumbnails
+  /// are requested, which keeps those extra CDN requests bounded.
+  Widget _buildPreviewGrid(BuildContext context, EightMusesDetail loaded) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 200),
+      sliver: SliverGrid(
+        gridDelegate: styleSetting.crossAxisCountInDetailPage.value == null
+            ? const SliverGridDelegateWithMaxCrossAxisExtent(
+                mainAxisExtent: UIConfig.detailsPageThumbnailHeight,
+                maxCrossAxisExtent: UIConfig.detailsPageThumbnailWidth,
+                mainAxisSpacing: 20,
+                crossAxisSpacing: 5,
+              )
+            : SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: styleSetting.crossAxisCountInDetailPage.value!,
+                mainAxisSpacing: 20,
+                crossAxisSpacing: 5,
+                childAspectRatio: UIConfig.detailsPageGridViewCardAspectRatio,
               ),
-            );
+        delegate: SliverChildBuilderDelegate(
+          (BuildContext context, int index) => _buildPreviewCell(context, loaded, index),
+          childCount: loaded.pageCount,
+        ),
+      ),
+    );
+  }
 
-            final Widget info = _buildInfo(context, loaded);
+  Widget _buildPreviewCell(BuildContext context, EightMusesDetail loaded, int index) {
+    final bool isLastRead = lastReadIndex == index;
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
 
-            if (constraints.maxWidth < 560) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(child: cover),
-                  const SizedBox(height: 16),
-                  info,
-                ],
-              );
-            }
+    return Column(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () => _openRead(initialIndex: index),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: isLastRead ? Border.all(color: primaryColor, width: 2) : null,
+              ),
+              child: EHImage(
+                galleryImage: GalleryImage(url: EightMusesParser.thumbUrl(loaded.id, index + 1)),
+                autoLayout: true,
+                fit: BoxFit.contain,
+                containerColor: UIConfig.galleryCardBackGroundColor(context),
+                borderRadius: BorderRadius.circular(8),
+                maxBytes: 512 * 1024,
 
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                cover,
-                const SizedBox(width: 16),
-                Expanded(child: info),
-              ],
-            );
-          },
+                /// The site's thumbnail route redirects to a CDN that sometimes
+                /// refuses bursts of requests; fall back to the page image
+                /// instead of leaving a broken tile.
+                failedWidgetBuilder: (_) => EHImage(
+                  galleryImage: GalleryImage(url: EightMusesParser.pageUrl(loaded.id, index + 1)),
+                  autoLayout: true,
+                  fit: BoxFit.contain,
+                  containerColor: UIConfig.galleryCardBackGroundColor(context),
+                  borderRadius: BorderRadius.circular(8),
+                  maxBytes: 512 * 1024,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          '${index + 1}',
+          style: TextStyle(
+            color: isLastRead ? primaryColor : UIConfig.detailsPageThumbnailIndexColor(context),
+          ),
         ),
       ],
     );
@@ -377,7 +502,7 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: _openRead,
+                onPressed: () => _openRead(),
                 icon: const Icon(Icons.menu_book),
                 label: Text('read'.tr),
               ),
