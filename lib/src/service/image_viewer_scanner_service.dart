@@ -80,12 +80,18 @@ class ImageViewerScannerService {
       }
 
       final dynamic decoded = jsonDecode(stdout);
-      if (decoded is! Map || decoded['viewers'] is! List) {
+      if (decoded is! Map) {
         return const <ImageViewerEntry>[];
       }
 
+      final dynamic rawViewers = decoded['viewers'];
+      if (rawViewers == null) {
+        return const <ImageViewerEntry>[];
+      }
+      final List<dynamic> items = rawViewers is List ? rawViewers : <dynamic>[rawViewers];
+
       final List<ImageViewerEntry> viewers = <ImageViewerEntry>[];
-      for (final dynamic item in decoded['viewers'] as List) {
+      for (final dynamic item in items) {
         if (item is! Map) {
           continue;
         }

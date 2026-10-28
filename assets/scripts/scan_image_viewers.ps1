@@ -42,6 +42,12 @@ function Add-Viewer($name, $path, $source) {
   $full = $full.Trim().Trim('"')
   if (-not [System.IO.Path]::IsPathRooted($full)) { return }
   if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { return }
+
+  # Shell hosts and DLL-based handlers (e.g. the legacy Photo Viewer) do not
+  # receive the image path as a regular first argument.
+  $blocked = @('rundll32.exe', 'dllhost.exe', 'pickerhost.exe', 'applicationframehost.exe', 'explorer.exe')
+  if ($blocked -contains ([System.IO.Path]::GetFileName($full).ToLowerInvariant())) { return }
+
   $key = $full.ToLowerInvariant()
   if ($seen.ContainsKey($key)) { return }
   $seen[$key] = $true
