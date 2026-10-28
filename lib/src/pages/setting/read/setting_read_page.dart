@@ -48,6 +48,8 @@ class SettingReadPage extends StatelessWidget {
                   _buildEnableDoubleTapToScaleUp().center(),
                   _buildEnableTapDragToScaleUp().center(),
                   _buildEnableAnime4KRestore().center(),
+                  _buildAlignToTopWhenTurnPage().center(),
+                  _buildZoomStepPercent().center(),
                   _buildEnableBottomMenu().center(),
                   _buildTapZoneStyle(context).center(),
                   _buildEnableImageMaxKilobytes().center(),
@@ -249,6 +251,35 @@ class SettingReadPage extends StatelessWidget {
       onChanged: (bool value) {
         readSetting.saveEnableAnime4KRestore(value);
       },
+    );
+  }
+
+  Widget _buildAlignToTopWhenTurnPage() {
+    return SwitchListTile(
+      title: Text('alignToTopWhenTurnPage'.tr),
+      subtitle: Text('alignToTopWhenTurnPageHint'.tr),
+      value: readSetting.alignToTopWhenTurnPage.value,
+      onChanged: readSetting.saveAlignToTopWhenTurnPage,
+    );
+  }
+
+  Widget _buildZoomStepPercent() {
+    return ListTile(
+      title: Text('zoomStepPercent'.tr),
+      subtitle: Text('zoomStepPercentHint'.tr),
+      trailing: DropdownButton<int>(
+        value: readSetting.zoomStepPercent.value,
+        elevation: 4,
+        onChanged: (int? newValue) {
+          readSetting.saveZoomStepPercent(newValue!);
+        },
+        items: const [
+          DropdownMenuItem(child: Text('5%'), value: 5),
+          DropdownMenuItem(child: Text('8%'), value: 8),
+          DropdownMenuItem(child: Text('12%'), value: 12),
+          DropdownMenuItem(child: Text('20%'), value: 20),
+        ],
+      ).marginOnly(right: 12),
     );
   }
 

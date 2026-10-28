@@ -735,6 +735,30 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
     }
   }
 
+  /// Left/right arrow keys keep their configured action (page turn by default)
+  /// unless Ctrl is held: with Ctrl and a zoomed image they pan the content
+  /// horizontally instead.
+  void handleHorizontalArrow({required bool isRight, required VoidCallback pageTurn}) {
+    if (!layoutLogic.isCtrlPressed) {
+      pageTurn();
+      return;
+    }
+
+    if (!layoutLogic.isZoomed) {
+      return;
+    }
+
+    if (isRight) {
+      layoutLogic.panRight();
+    } else {
+      layoutLogic.panLeft();
+    }
+  }
+
+  void handleZoomIn() => layoutLogic.zoomIn();
+
+  void handleZoomOut() => layoutLogic.zoomOut();
+
   void handleM() {
     toggleDisplayFirstPageAlone();
   }

@@ -8,6 +8,7 @@ import 'package:jhentai/src/extension/widget_extension.dart';
 import 'package:jhentai/src/mixin/scroll_status_listener.dart';
 import 'package:jhentai/src/mixin/scroll_status_listener_state.dart';
 import 'package:jhentai/src/mixin/window_widget_mixin.dart';
+import 'package:jhentai/src/model/read_action.dart';
 import 'package:jhentai/src/model/read_page_info.dart';
 import 'package:jhentai/src/model/tap_zone_config.dart';
 import 'package:jhentai/src/pages/read/layout/horizontal_list/horizontal_list_layout.dart';
@@ -78,10 +79,27 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
       ...baseKeyHandlers,
     };
 
-    // Left/right always keep their configured page-turn action, even while the
-    // image is zoomed. Only up/down pan the zoomed content.
+    // Left/right keep their configured page-turn action, even while the image
+    // is zoomed, unless Ctrl is held (then they pan the zoomed content).
+    // Up/down pan vertical content; +/- (including the numpad) zoom.
     keyHandlers.putIfAbsent(LogicalKeyboardKey.arrowUp, () => logic.handleArrowUp);
     keyHandlers.putIfAbsent(LogicalKeyboardKey.arrowDown, () => logic.handleArrowDown);
+
+    for (final LogicalKeyboardKey key in <LogicalKeyboardKey>[LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.arrowRight]) {
+      final ReadAction? action = keyboardShortcutSetting.actionForKey(key);
+      if (action != ReadAction.toLeft && action != ReadAction.toRight) {
+        continue;
+      }
+      keyHandlers[key] = () => logic.handleHorizontalArrow(
+            isRight: key == LogicalKeyboardKey.arrowRight,
+            pageTurn: action == ReadAction.toLeft ? logic.toLeft : logic.toRight,
+          );
+    }
+
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.equal, () => logic.handleZoomIn);
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.add, () => logic.handleZoomIn);
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.minus, () => logic.handleZoomOut);
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.subtract, () => logic.handleZoomOut);
 
     Widget child = AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -107,9 +125,27 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
           child: EHKeyboardListener(
             focusNode: state.focusNode,
             keyHandlers: keyHandlers,
-            repeatableKeys: <LogicalKeyboardKey>{
-              LogicalKeyboardKey.arrowUp,
-              LogicalKeyboardKey.arrowDown,
+            repeatPredicate: (KeyEvent event) {
+              final LogicalKeyboardKey key = event.logicalKey;
+
+              /// vertical pan and zoom repeat while held
+              if (key == LogicalKeyboardKey.arrowUp ||
+                  key == LogicalKeyboardKey.arrowDown ||
+                  key == LogicalKeyboardKey.equal ||
+                  key == LogicalKeyboardKey.add ||
+                  key == LogicalKeyboardKey.minus ||
+                  key == LogicalKeyboardKey.subtract) {
+                return true;
+              }
+
+              /// left/right only repeat while Ctrl is held (pan); a plain held
+              /// arrow must keep turning exactly one page
+              if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
+                final Set<LogicalKeyboardKey> pressed = HardwareKeyboard.instance.logicalKeysPressed;
+                return pressed.contains(LogicalKeyboardKey.controlLeft) || pressed.contains(LogicalKeyboardKey.controlRight);
+              }
+
+              return false;
             },
             child: DefaultTextStyle(
               style: DefaultTextStyle.of(context).style.copyWith(

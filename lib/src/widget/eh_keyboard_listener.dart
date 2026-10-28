@@ -13,9 +13,16 @@ class EHKeyboardListener extends StatelessWidget {
   /// Keys whose auto-repeat events should invoke the handler too.
   ///
   /// Empty by default, which preserves the original behaviour: only the initial
-  /// key-down is dispatched. Used by the read page so held pan keys keep moving
-  /// the zoomed image.
+  /// key-down is dispatched. Used by the read page so held pan/zoom keys keep
+  /// moving/zooming the image.
   final Set<LogicalKeyboardKey> repeatableKeys;
+
+  /// Optional predicate for auto-repeat events, evaluated instead of
+  /// [repeatableKeys] when provided.
+  ///
+  /// The read page uses it so that left/right only repeat while Ctrl is held
+  /// (panning), keeping a plain held arrow a single page turn.
+  final bool Function(KeyEvent event)? repeatPredicate;
 
   const EHKeyboardListener({
     Key? key,
@@ -23,6 +30,7 @@ class EHKeyboardListener extends StatelessWidget {
     required this.keyHandlers,
     this.focusNode,
     this.repeatableKeys = const <LogicalKeyboardKey>{},
+    this.repeatPredicate,
   }) : super(key: key);
 
   @override
@@ -32,7 +40,8 @@ class EHKeyboardListener extends StatelessWidget {
       focusNode: focusNode,
       onKeyEvent: (FocusNode node, KeyEvent event) {
         if (event is KeyRepeatEvent) {
-          if (!repeatableKeys.contains(event.logicalKey)) {
+          final bool repeatable = repeatPredicate != null ? repeatPredicate!(event) : repeatableKeys.contains(event.logicalKey);
+          if (!repeatable) {
             return KeyEventResult.ignored;
           }
         } else if (event is! KeyDownEvent) {

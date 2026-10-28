@@ -10,6 +10,7 @@ import '../../../../setting/read_setting.dart';
 import '../../../../utils/screen_size_util.dart';
 import '../../../../widget/eh_wheel_speed_controller_for_read_page.dart';
 import '../base/base_layout.dart';
+import '../base/base_layout_logic.dart';
 import 'horizontal_list_layout_logic.dart';
 
 class HorizontalListLayout extends BaseLayout {
@@ -25,12 +26,13 @@ class HorizontalListLayout extends BaseLayout {
     /// user PhotoViewGallery to scale up the whole gallery list, so set itemCount to 1
     return PhotoViewGallery.builder(
       enableCtrlScrollZoom: true,
+      ctrlScrollZoomFactor: logic.zoomStep,
       itemCount: 1,
       builder: (_, __) => PhotoViewGalleryPageOptions.customChild(
         controller: state.photoViewController,
         initialScale: 1.0,
         minScale: 1.0,
-        maxScale: 2.5,
+        maxScale: BaseLayoutLogic.maxZoomScale,
         scaleStateCycle: readSetting.enableDoubleTapToScaleUp.isTrue ? logic.scaleStateCycle : null,
         enableTapDragZoom: readSetting.enableTapDragToScaleUp.isTrue,
         child: EHWheelSpeedControllerForReadPage(

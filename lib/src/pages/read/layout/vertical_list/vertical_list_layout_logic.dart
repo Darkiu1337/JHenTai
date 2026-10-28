@@ -116,6 +116,10 @@ class VerticalListLayoutLogic extends BaseLayoutLogic {
   void jump2ImageIndex(int imageIndex) {
     /// Method [jumpTo] leads to redrawing, so wo use scrollTo
     state.itemScrollController.scrollTo(index: imageIndex, duration: const Duration(milliseconds: 1));
+
+    /// apply the top alignment before the scroll starts instead of waiting for
+    /// the debounce to fire after it settles
+    alignToTopIfNeeded();
     super.jump2ImageIndex(imageIndex);
   }
 
@@ -126,6 +130,7 @@ class VerticalListLayoutLogic extends BaseLayoutLogic {
       index: imageIndex,
       duration: duration ?? const Duration(milliseconds: 200),
     );
+    alignToTopIfNeeded();
     super.scroll2ImageIndex(imageIndex, duration);
   }
 

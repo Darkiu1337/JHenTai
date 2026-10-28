@@ -11,6 +11,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import '../../../../service/gallery_download/gallery_download_service.dart';
 import '../../../../setting/read_setting.dart';
 import '../base/base_layout.dart';
+import '../base/base_layout_logic.dart';
 import 'horizontal_double_column_layout_logic.dart';
 
 class HorizontalDoubleColumnLayout extends BaseLayout {
@@ -23,6 +24,8 @@ class HorizontalDoubleColumnLayout extends BaseLayout {
 
   @override
   Widget buildBody(BuildContext context) {
+    logic.onViewportChanged(readPageState.displayRegionSize);
+
     return EHWheelListener(
       onPointerScroll: logic.onPointerScroll,
       child: FutureBuilder(
@@ -31,6 +34,7 @@ class HorizontalDoubleColumnLayout extends BaseLayout {
           if (snapshot.connectionState == ConnectionState.done) {
             return PhotoViewGallery.builder(
               enableCtrlScrollZoom: true,
+              ctrlScrollZoomFactor: logic.zoomStep,
               scrollPhysics: const ClampingScrollPhysics(),
               pageController: state.pageController,
               cacheExtent: readPageState.readPageInfo.mode == ReadMode.online
@@ -39,11 +43,11 @@ class HorizontalDoubleColumnLayout extends BaseLayout {
               reverse: logic.readPageLogic.isInRight2LeftDirection,
               itemCount: state.pageCount,
               builder: (context, index) => PhotoViewGalleryPageOptions.customChild(
-                controller: state.photoViewControllerOf(index),
-                scaleStateController: state.photoViewScaleStateControllerOf(index),
+                controller: logic.pageViewControllerFor(index),
+                scaleStateController: logic.scaleStateControllerFor(index),
                 initialScale: 1.0,
                 minScale: 1.0,
-                maxScale: 2.5,
+                maxScale: BaseLayoutLogic.maxZoomScale,
                 scaleStateCycle: readSetting.enableDoubleTapToScaleUp.isTrue ? logic.scaleStateCycle : null,
                 enableTapDragZoom: readSetting.enableTapDragToScaleUp.isTrue,
                 child: index < 0 || index >= state.pageCount
@@ -138,6 +142,7 @@ class HorizontalDoubleColumnLayout extends BaseLayout {
       } else {
         logic.readPageLogic.updateSafely(['${readPageLogic.onlineImageId}::$index']);
       }
+      logic.onImageSizeKnown(index);
     });
 
     return null;
@@ -171,6 +176,7 @@ class HorizontalDoubleColumnLayout extends BaseLayout {
       } else {
         galleryDownloadService.updateSafely(['${galleryDownloadService.downloadImageId}::${readPageState.readPageInfo.gid}::$index']);
       }
+      logic.onImageSizeKnown(index);
     });
 
     return null;

@@ -100,6 +100,7 @@ class HorizontalListLayoutLogic extends BaseLayoutLogic {
 
     /// Method [jumpTo] leads to redrawing, so wo use scrollTo
     state.itemScrollController.scrollTo(index: imageIndex, duration: const Duration(milliseconds: 1));
+    alignToTopIfNeeded();
   }
 
   /// scroll to a certain image
@@ -109,6 +110,7 @@ class HorizontalListLayoutLogic extends BaseLayoutLogic {
       index: imageIndex,
       duration: duration ?? const Duration(milliseconds: 200),
     );
+    alignToTopIfNeeded();
     super.scroll2ImageIndex(imageIndex, duration);
   }
 

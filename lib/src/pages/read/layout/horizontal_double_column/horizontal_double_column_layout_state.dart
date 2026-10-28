@@ -16,8 +16,17 @@ class HorizontalDoubleColumnLayoutState {
   final Map<int, PhotoViewController> photoViewControllers = <int, PhotoViewController>{};
   final Map<int, PhotoViewScaleStateController> photoViewScaleStateControllers = <int, PhotoViewScaleStateController>{};
 
-  PhotoViewController photoViewControllerOf(int pageIndex) =>
-      photoViewControllers.putIfAbsent(pageIndex, () => PhotoViewController());
+  /// Returns the controller of [pageIndex], creating it with [initialScale] and
+  /// [initialPosition] when it does not exist yet.
+  PhotoViewController photoViewControllerOf(
+    int pageIndex, {
+    double? initialScale,
+    Offset initialPosition = Offset.zero,
+  }) =>
+      photoViewControllers.putIfAbsent(
+        pageIndex,
+        () => PhotoViewController(initialScale: initialScale, initialPosition: initialPosition),
+      );
 
   PhotoViewScaleStateController photoViewScaleStateControllerOf(int pageIndex) =>
       photoViewScaleStateControllers.putIfAbsent(pageIndex, () => PhotoViewScaleStateController());

@@ -10,6 +10,7 @@ import '../../../../setting/read_setting.dart';
 import '../../../../utils/screen_size_util.dart';
 import '../../../../widget/eh_wheel_speed_controller_for_read_page.dart';
 import '../base/base_layout.dart';
+import '../base/base_layout_logic.dart';
 import 'vertical_list_layout_logic.dart';
 
 class VerticalListLayout extends BaseLayout {
@@ -25,13 +26,14 @@ class VerticalListLayout extends BaseLayout {
       id: logic.verticalLayoutId,
       builder: (_) => PhotoViewGallery.builder(
         enableCtrlScrollZoom: true,
+        ctrlScrollZoomFactor: logic.zoomStep,
         scrollDirection: Axis.vertical,
         itemCount: 1,
         builder: (_, __) => PhotoViewGalleryPageOptions.customChild(
           controller: state.photoViewController,
           initialScale: 1.0,
           minScale: 1.0,
-          maxScale: 2.5,
+          maxScale: BaseLayoutLogic.maxZoomScale,
           scaleStateCycle: readSetting.enableDoubleTapToScaleUp.isTrue ? logic.scaleStateCycle : null,
           enableTapDragZoom: readSetting.enableTapDragToScaleUp.isTrue,
           child: EHWheelSpeedControllerForReadPage(

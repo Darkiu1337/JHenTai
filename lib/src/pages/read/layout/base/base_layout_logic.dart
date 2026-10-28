@@ -58,6 +58,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   Worker? tapDragGestureSwitcherListener;
   Worker? showScrollBarListener;
   Worker? anime4KRestoreListener;
+  Worker? zoomStepListener;
 
   @override
   void onInit() {
@@ -65,6 +66,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     tapDragGestureSwitcherListener = ever(readSetting.enableTapDragToScaleUp, (value) => updateSafely([pageId]));
     showScrollBarListener = ever(readSetting.showScrollBar, (value) => updateSafely([pageId]));
     anime4KRestoreListener = ever(readSetting.enableAnime4KRestore, (value) => updateSafely([pageId]));
+    zoomStepListener = ever(readSetting.zoomStepPercent, (value) => updateSafely([pageId]));
     super.onInit();
   }
 
@@ -76,6 +78,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     tapDragGestureSwitcherListener?.dispose();
     showScrollBarListener?.dispose();
     anime4KRestoreListener?.dispose();
+    zoomStepListener?.dispose();
     super.onClose();
   }
 
@@ -130,12 +133,55 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
 
   double get activeScale => activePhotoViewController?.scale ?? 1.0;
 
-  bool get isZoomed => activeScale > 1.001;
+  bool get isZoomed => activeScale > maxZoomScaleEpsilon;
+
+  /// Upper zoom bound used by every reading layout.
+  static const double maxZoomScale = 2.5;
+
+  /// Minimum difference that is still considered a zoom change.
+  static const double maxZoomScaleEpsilon = 0.001;
+
+  /// Percentage of the viewport covered by one arrow-key pan.
+  static const double _panViewportRatio = 0.08;
+
+  bool get isCtrlPressed {
+    final Set<LogicalKeyboardKey> pressed = HardwareKeyboard.instance.logicalKeysPressed;
+    return pressed.contains(LogicalKeyboardKey.controlLeft) || pressed.contains(LogicalKeyboardKey.controlRight);
+  }
 
   /// Distance covered by one arrow-key pan, proportional to the viewport.
   Offset get panStep {
     final Size region = readPageState.displayRegionSize;
-    return Offset(region.width * 0.08, region.height * 0.08);
+    return Offset(region.width * _panViewportRatio, region.height * _panViewportRatio);
+  }
+
+  /// Allowed position range for [scale], derived from the real content size.
+  ///
+  /// photo_view only knows the viewport as its child size (no page passes
+  /// `childSize`), so its own clamp lets the image be dragged past its edges.
+  /// When the layout knows the content size, panning is bounded by it instead.
+  Offset? computePanBounds(double scale) {
+    final Size? contentSize = activeContentSize;
+    if (contentSize == null || scale <= maxZoomScaleEpsilon) {
+      return null;
+    }
+
+    final Size viewport = readPageState.displayRegionSize;
+    return Offset(
+      max(0.0, (contentSize.width * scale - viewport.width) / 2),
+      max(0.0, (contentSize.height * scale - viewport.height) / 2),
+    );
+  }
+
+  Offset clampPanPosition(Offset position, double scale) {
+    final Offset? bounds = computePanBounds(scale);
+    if (bounds == null) {
+      return position;
+    }
+    return Offset(
+      position.dx.clamp(-bounds.dx, bounds.dx).toDouble(),
+      position.dy.clamp(-bounds.dy, bounds.dy).toDouble(),
+    );
   }
 
   void panBy(Offset delta) {
@@ -144,14 +190,45 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       return;
     }
 
-    /// photo_view clamps the position against the current content boundaries
-    /// on every controller update, so just add the delta.
-    controller.updateMultiple(position: controller.position + delta);
+    final double scale = controller.scale ?? 1.0;
+    controller.updateMultiple(position: clampPanPosition(controller.position + delta, scale));
   }
 
   void panUp() => panBy(Offset(0, panStep.dy));
 
   void panDown() => panBy(Offset(0, -panStep.dy));
+
+  /// Ctrl+Left: reveal the left side of the zoomed content.
+  void panLeft() => panBy(Offset(panStep.dx, 0));
+
+  /// Ctrl+Right: reveal the right side of the zoomed content.
+  void panRight() => panBy(Offset(-panStep.dx, 0));
+
+  /// Zoom step used by ctrl+wheel and by the +/- keys, as a fraction (0.08 =
+  /// 8% per step).
+  double get zoomStep => (readSetting.zoomStepPercent.value / 100).clamp(0.01, 0.5).toDouble();
+
+  void zoomIn() => zoomBy(1 + zoomStep);
+
+  void zoomOut() => zoomBy(1 - zoomStep);
+
+  /// Multiplies the current scale by [factor] without moving the position, so
+  /// the point in the center of the viewport stays put. photo_view clamps the
+  /// position when the resulting scale is applied.
+  void zoomBy(double factor) {
+    final PhotoViewControllerBase? controller = activePhotoViewController;
+    if (controller == null) {
+      return;
+    }
+
+    final double currentScale = controller.scale ?? 1.0;
+    final double nextScale = (currentScale * factor).clamp(1.0, maxZoomScale).toDouble();
+    if ((nextScale - currentScale).abs() < maxZoomScaleEpsilon) {
+      return;
+    }
+
+    controller.updateMultiple(scale: nextScale, position: clampPanPosition(controller.position, nextScale));
+  }
 
   /// Position that puts the top edge of the visible content at the top of the
   /// viewport without changing the current scale.
@@ -162,8 +239,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   Offset computeTopAlignedPosition(double scale, Size? contentSize) {
     final Size viewport = readPageState.displayRegionSize;
     final double contentHeight = contentSize?.height ?? viewport.height;
-    final double maxY = max(0.0, (contentHeight * scale - viewport.height) / 2);
-    return Offset(0, maxY);
+    return Offset(0, max(0.0, (contentHeight * scale - viewport.height) / 2));
   }
 
   /// Re-applies the current scale while moving the content back to its top
@@ -175,8 +251,32 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     }
 
     final double scale = controller.scale ?? 1.0;
-    final Offset position = scale > 1.001 ? computeTopAlignedPosition(scale, activeContentSize) : Offset.zero;
+    final Offset position = scale > maxZoomScaleEpsilon ? computeTopAlignedPosition(scale, activeContentSize) : Offset.zero;
     controller.updateMultiple(position: position, scale: scale);
+  }
+
+  /// Called when the real size of an image becomes known (right after
+  /// `imageContainerSizes[index]` is filled).
+  ///
+  /// Layouts that align new pages to the top use it to correct the alignment
+  /// when the size was still unknown during the page change.
+  void onImageSizeKnown(int imageIndex) {}
+
+  /// Aligns the zoomed content to the top immediately, honouring the user
+  /// setting. Used by the list layouts, where the alignment does not depend on
+  /// the item size and can be applied before the scroll animation starts.
+  void alignToTopIfNeeded() {
+    if (readSetting.alignToTopWhenTurnPage.isFalse || !isZoomed) {
+      return;
+    }
+    alignActiveContentToTop();
+  }
+
+  /// Debounced top alignment for scrolling layouts, where the visible image
+  /// changes many times during a single gesture.
+  void scheduleAlignToTop([Duration delay = const Duration(milliseconds: 200)]) {
+    alignToTopTimer?.cancel();
+    alignToTopTimer = Timer(delay, alignActiveContentToTop);
   }
 
   /// Debounced top alignment for scrolling layouts, where the visible image
@@ -196,8 +296,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
   }
 
   void onPointerScroll(PointerScrollEvent value) {
-    final ctrlPressed = HardwareKeyboard.instance.logicalKeysPressed.any((key) => key == LogicalKeyboardKey.controlLeft || key == LogicalKeyboardKey.controlRight);
-    if (ctrlPressed) {
+    if (isCtrlPressed) {
       return;
     }
 

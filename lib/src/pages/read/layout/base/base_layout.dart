@@ -217,6 +217,7 @@ abstract class BaseLayout extends StatelessWidget {
       );
       logic.readPageState.imageContainerSizes[index] = fittedSizes.destination;
       logic.readPageLogic.updateSafely(['${readPageLogic.onlineImageId}::$index']);
+      logic.onImageSizeKnown(index);
     });
 
     return null;
@@ -417,6 +418,7 @@ abstract class BaseLayout extends StatelessWidget {
       );
       logic.readPageState.imageContainerSizes[index] = fittedSizes.destination;
       galleryDownloadService.updateSafely(['${galleryDownloadService.downloadImageId}::${readPageState.readPageInfo.gid}::$index']);
+      logic.onImageSizeKnown(index);
     });
 
     return null;

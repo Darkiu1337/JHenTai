@@ -184,6 +184,18 @@ class KeyboardShortcutSetting with JHLifeCircleBeanWithConfigStorage implements 
 
   List<ReadActionBinding?> bindingsFor(ReadAction action) => bindings[action] ?? [null, null];
 
+  /// Returns the action bound to [key], if any.
+  ReadAction? actionForKey(LogicalKeyboardKey key) {
+    for (final MapEntry<ReadAction, List<ReadActionBinding?>> entry in bindings.entries) {
+      for (final ReadActionBinding? binding in entry.value) {
+        if (binding != null && binding.isKeyboard && binding.logicalKey == key) {
+          return entry.key;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Returns the action whose binding matches [binding], skipping [excludeAction].
   ReadAction? getActionForBinding(ReadActionBinding binding, ReadAction excludeAction) {
     return _getActionForBindingWithExclude(binding, excludeAction, null);

@@ -6,6 +6,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 
 import '../../../../setting/read_setting.dart';
 import '../base/base_layout.dart';
+import '../base/base_layout_logic.dart';
 import 'horizontal_page_layout_logic.dart';
 import 'horizontal_page_layout_state.dart';
 
@@ -19,10 +20,13 @@ class HorizontalPageLayout extends BaseLayout {
 
   @override
   Widget buildBody(BuildContext context) {
+    logic.onViewportChanged(readPageState.displayRegionSize);
+
     return EHWheelListener(
       onPointerScroll: logic.readPageLogic.isInFitWidthReadDirection ? null : logic.onPointerScroll,
       child: PhotoViewGallery.builder(
         enableCtrlScrollZoom: true,
+        ctrlScrollZoomFactor: logic.zoomStep,
         itemCount: readPageState.readPageInfo.pageCount,
         scrollPhysics: const ClampingScrollPhysics(),
         pageController: logic.pageController,
@@ -31,11 +35,11 @@ class HorizontalPageLayout extends BaseLayout {
             : readSetting.preloadPageCountLocal.value.toDouble(),
         reverse: logic.readPageLogic.isInRight2LeftDirection,
         builder: (context, index) => PhotoViewGalleryPageOptions.customChild(
-          controller: state.photoViewControllerOf(index),
-          scaleStateController: state.photoViewScaleStateControllerOf(index),
+          controller: logic.pageViewControllerFor(index),
+          scaleStateController: logic.scaleStateControllerFor(index),
           initialScale: 1.0,
           minScale: 1.0,
-          maxScale: 2.5,
+          maxScale: BaseLayoutLogic.maxZoomScale,
           scaleStateCycle: readSetting.enableDoubleTapToScaleUp.isTrue ? logic.scaleStateCycle : null,
           enableTapDragZoom: readSetting.enableTapDragToScaleUp.isTrue,
           child: Obx(() {

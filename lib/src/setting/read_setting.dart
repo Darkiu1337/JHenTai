@@ -24,6 +24,12 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   RxBool enableDoubleTapToScaleUp = false.obs;
   RxBool enableTapDragToScaleUp = false.obs;
   RxBool enableAnime4KRestore = false.obs;
+
+  /// Align a zoomed page to its top edge when the reader turns the page.
+  RxBool alignToTopWhenTurnPage = true.obs;
+
+  /// Zoom step (in percent) applied by ctrl+wheel and by the +/- keys.
+  RxInt zoomStepPercent = 8.obs;
   RxBool enableBottomMenu = false.obs;
   Rx<DeviceDirection> deviceDirection = DeviceDirection.followSystem.obs;
   Rx<ReadDirection> readDirection = GetPlatform.isMobile ? ReadDirection.top2bottomList.obs : ReadDirection.left2rightList.obs;
@@ -139,6 +145,8 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
     enableDoubleTapToScaleUp.value = map['enableDoubleTapToScaleUp'] ?? enableDoubleTapToScaleUp.value;
     enableTapDragToScaleUp.value = map['enableTapDragToScaleUp'] ?? enableTapDragToScaleUp.value;
     enableAnime4KRestore.value = map['enableAnime4KRestore'] ?? enableAnime4KRestore.value;
+    alignToTopWhenTurnPage.value = map['alignToTopWhenTurnPage'] ?? alignToTopWhenTurnPage.value;
+    zoomStepPercent.value = (map['zoomStepPercent'] as num?)?.toInt() ?? zoomStepPercent.value;
     enableBottomMenu.value = map['enableBottomMenu'] ?? enableBottomMenu.value;
     autoModeInterval.value = (map['autoModeInterval'] as num?)?.toDouble() ?? autoModeInterval.value;
     autoModeStyle.value = AutoModeStyle.values[map['autoModeStyle'] ?? AutoModeStyle.scroll.index];
@@ -185,6 +193,8 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
       'enableDoubleTapToScaleUp': enableDoubleTapToScaleUp.value,
       'enableTapDragToScaleUp': enableTapDragToScaleUp.value,
       'enableAnime4KRestore': enableAnime4KRestore.value,
+      'alignToTopWhenTurnPage': alignToTopWhenTurnPage.value,
+      'zoomStepPercent': zoomStepPercent.value,
       'enableBottomMenu': enableBottomMenu.value,
       'autoModeInterval': autoModeInterval.value,
       'autoModeStyle': autoModeStyle.value.index,
@@ -380,6 +390,18 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   Future<void> saveEnableAnime4KRestore(bool value) async {
     log.debug('saveEnableAnime4KRestore:$value');
     enableAnime4KRestore.value = value;
+    await saveBeanConfig();
+  }
+
+  Future<void> saveAlignToTopWhenTurnPage(bool value) async {
+    log.debug('saveAlignToTopWhenTurnPage:$value');
+    alignToTopWhenTurnPage.value = value;
+    await saveBeanConfig();
+  }
+
+  Future<void> saveZoomStepPercent(int value) async {
+    log.debug('saveZoomStepPercent:$value');
+    zoomStepPercent.value = value;
     await saveBeanConfig();
   }
 
