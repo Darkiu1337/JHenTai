@@ -15,6 +15,9 @@ concurrency:
 
 jobs:
   Build:
+    # The release matrix needs the upstream signing/API secrets; skip it in forks
+    # so a fork's master does not carry a permanently failing workflow.
+    if: github.repository == 'jiangtian616/JHenTai'
     strategy:
       fail-fast: false
       matrix:
