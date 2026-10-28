@@ -279,6 +279,22 @@ Known limitations:
 -   The site mirrors `8muses.com` and `allporncomic.com`, so coverage of a given
     artist is partial.
 
+### Already read list
+
+A manual list that hides finished works from the browsing feeds, so they do not
+keep coming back. Works for both sources.
+
+-   **Mark read** on the E-H detail action row, on the 8muses detail page (app
+    bar) or in the 8muses card context menu toggles the gallery in/out of the
+    local list (`GetStorage`, no login, no E-H slot).
+-   Marked galleries disappear from the home feed, search, popular, watched and
+    every 8muses listing. Favorites, History, Ranklist and the *Already read*
+    page itself keep showing them. When a whole result page would be hidden, the
+    app skips to the next one instead of showing an empty list.
+-   The **Already read** sidebar entry lists them with the normal gallery cards
+    (paged, 100 per page); right-click/long-press removes one, the app bar
+    trash removes all. The list is source-agnostic (E-H and 8muses together).
+
 ### Localization
 
 -   Complete **pt-BR** translation (824 keys) with corrected wording and
