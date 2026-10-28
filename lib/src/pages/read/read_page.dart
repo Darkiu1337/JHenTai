@@ -32,6 +32,7 @@ import '../../widget/eh_keyboard_listener.dart';
 import '../../widget/eh_read_page_stack.dart';
 import '../../widget/eh_thumbnail.dart';
 import '../../widget/eh_wheel_speed_controller_for_read_page.dart';
+import '../../widget/external_viewer_progress_overlay.dart';
 import '../../widget/loading_state_indicator.dart';
 import 'layout/horizontal_double_column/horizontal_double_column_layout.dart';
 import 'layout/vertical_list/vertical_list_layout.dart';
@@ -172,6 +173,7 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
                       ],
                     ),
                     buildRightBottomInfo(context),
+                    const ExternalViewerProgressOverlay(),
                     buildTopMenu(context),
                     buildBottomMenu(context),
                   ],

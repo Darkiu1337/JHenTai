@@ -21,6 +21,7 @@ import 'package:jhentai/src/pages/read/layout/horizontal_page/horizontal_page_la
 import 'package:jhentai/src/pages/read/layout/vertical_list/vertical_list_layout_logic.dart';
 import 'package:jhentai/src/pages/read/read_page_state.dart';
 import 'package:jhentai/src/service/super_resolution_service.dart';
+import 'package:jhentai/src/service/external_viewer_service.dart';
 import 'package:jhentai/src/service/volume_service.dart';
 import 'package:jhentai/src/setting/style_setting.dart';
 import 'package:jhentai/src/utils/eh_executor.dart';
@@ -333,6 +334,10 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
 
     /// Release the 2x upscaled textures of this reading session.
     upscaleService.clearCache();
+
+    /// Remove external-viewer folders left behind by previous sessions when
+    /// no viewer is still showing them.
+    unawaited(externalViewerService.cleanupOrphans());
   }
 
   void beginToParseImageHref(int index) {
@@ -448,6 +453,56 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
       parser: EHSpiderParser.imagePage2GalleryImage,
       useCacheIfAvailable: !reParse,
     );
+  }
+
+  /// Resolves the image URL for the external viewer stream without mutating
+  /// the reader's parsed-image state for every page. The current page usually
+  /// comes straight from [state.images]. Later pages are parsed on demand.
+  Future<GalleryImage?> resolveImageForExternalViewer(int index) async {
+    if (index < 0 || index >= state.readPageInfo.pageCount) {
+      return null;
+    }
+
+    if (state.readPageInfo.mode != ReadMode.online) {
+      return state.images[index];
+    }
+
+    if (state.images[index] != null) {
+      return state.images[index];
+    }
+
+    if (state.thumbnails[index] == null) {
+      if (state.parseImageHrefsStates[index] != LoadingState.loading) {
+        await parseImageHref(index);
+      }
+
+      /// parseImageHref may re-schedule itself when the gallery's thumbnails
+      /// per page differs from the cached setting. Wait for that pass too.
+      int waited = 0;
+      while (state.thumbnails[index] == null && waited < 100) {
+        if (state.parseImageHrefsStates[index] == LoadingState.error) {
+          return null;
+        }
+        await Future.delayed(const Duration(milliseconds: 50));
+        waited++;
+      }
+    }
+
+    if (state.thumbnails[index] == null) {
+      return null;
+    }
+
+    try {
+      return await retry(
+        () => requestImage(index, false, null),
+        maxAttempts: 3,
+        retryIf: (e) => e is DioException,
+        onRetry: (e) => log.error('Resolve image for the external viewer failed, index: $index', (e as DioException).errorMsg),
+      );
+    } catch (e) {
+      log.error('Resolve image for the external viewer failed, index: $index', e);
+      return null;
+    }
   }
 
   Future<void> reloadImage(int index) async {

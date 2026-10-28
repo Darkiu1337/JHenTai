@@ -45,6 +45,13 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   RxnString tapZoneConfigJson = RxnString();
   RxBool useThirdPartyViewer = false.obs;
   RxnString thirdPartyViewerPath = RxnString();
+
+  /// How pages are handed to the external image viewer.
+  Rx<ExternalViewerStreamMode> externalViewerStreamMode = ExternalViewerStreamMode.auto.obs;
+
+  /// Optional argument template for the external viewer. `{path}` is replaced
+  /// by the file/folder path; when empty only the path is passed.
+  RxnString externalViewerArgs = RxnString();
   RxDouble autoModeInterval = 2.0.obs;
   Rx<AutoModeStyle> autoModeStyle = AutoModeStyle.turnPage.obs;
   Rx<TurnPageMode> turnPageMode = TurnPageMode.adaptive.obs;
@@ -162,6 +169,8 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
     _cachedTapZoneConfig = null;
     useThirdPartyViewer.value = map['useThirdPartyViewer'] ?? useThirdPartyViewer.value;
     thirdPartyViewerPath.value = map['thirdPartyViewerPath'];
+    externalViewerStreamMode.value = ExternalViewerStreamMode.values[map['externalViewerStreamMode'] ?? ExternalViewerStreamMode.auto.index];
+    externalViewerArgs.value = map['externalViewerArgs'];
     turnPageMode.value = TurnPageMode.values[map['turnPageMode']];
     preloadDistance.value = map['preloadDistance'];
     preloadDistanceLocal.value = map['preloadDistanceLocal'] ?? preloadDistanceLocal.value;
@@ -209,6 +218,8 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
       'tapZoneConfig': tapZoneConfigJson.value,
       'useThirdPartyViewer': useThirdPartyViewer.value,
       'thirdPartyViewerPath': thirdPartyViewerPath.value,
+      'externalViewerStreamMode': externalViewerStreamMode.value.index,
+      'externalViewerArgs': externalViewerArgs.value,
       'turnPageMode': turnPageMode.value.index,
       'preloadDistance': preloadDistance.value,
       'preloadDistanceLocal': preloadDistanceLocal.value,
@@ -362,6 +373,18 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   Future<void> saveThirdPartyViewerPath(String? value) async {
     log.debug('saveThirdPartyViewerPath:$value');
     thirdPartyViewerPath.value = value;
+    await saveBeanConfig();
+  }
+
+  Future<void> saveExternalViewerStreamMode(ExternalViewerStreamMode value) async {
+    log.debug('saveExternalViewerStreamMode:${value.name}');
+    externalViewerStreamMode.value = value;
+    await saveBeanConfig();
+  }
+
+  Future<void> saveExternalViewerArgs(String? value) async {
+    log.debug('saveExternalViewerArgs:$value');
+    externalViewerArgs.value = value;
     await saveBeanConfig();
   }
 
@@ -524,4 +547,18 @@ enum TurnPageMode {
 enum AutoModeStyle {
   scroll,
   turnPage,
+}
+
+/// How an online gallery is prepared for the external image viewer.
+enum ExternalViewerStreamMode {
+  /// Stream to viewers known to watch the folder (nomacs); wait for the rest.
+  auto,
+
+  /// Write the current page and keep downloading while the viewer is open.
+  /// The viewer must watch the folder for new pages to appear.
+  stream,
+
+  /// Download every page before launching the viewer. Required by viewers
+  /// that only read the folder once when opened.
+  waitAll,
 }

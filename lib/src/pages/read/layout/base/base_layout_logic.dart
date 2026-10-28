@@ -21,6 +21,7 @@ import 'package:jhentai/src/network/eh_request.dart';
 import 'package:jhentai/src/service/gallery_download/download_path_resolver.dart';
 import 'package:jhentai/src/service/gallery_download/eh_image_exception_matcher.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_download_service.dart';
+import 'package:jhentai/src/service/external_viewer_service.dart';
 import 'package:jhentai/src/service/path_service.dart';
 import 'package:jhentai/src/setting/download_setting.dart';
 import 'package:jhentai/src/setting/style_setting.dart';
@@ -318,6 +319,57 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     }
   }
 
+  /// Whether the "open in external viewer" action is available.
+  ///
+  /// The custom viewer path is configured in Settings > Read for desktop
+  /// platforms only; the switch that redirects downloaded galleries to the
+  /// viewer is intentionally not required, since it is usually off for people
+  /// who read inside JHenTai.
+  bool get showExternalViewerAction => GetPlatform.isDesktop && (readSetting.thirdPartyViewerPath.value?.trim().isNotEmpty ?? false);
+
+  /// Opens the gallery in the external image viewer configured in
+  /// Settings > Read.
+  ///
+  /// Online galleries are streamed page by page into a temporary folder (or
+  /// fully downloaded first, depending on the configured mode). Already
+  /// downloaded/archive/local galleries open the current image file directly.
+  Future<void> openInExternalViewer(int index) async {
+    if (readPageState.readPageInfo.mode == ReadMode.online) {
+      await externalViewerService.openOnlineGallery(
+        readPageInfo: readPageState.readPageInfo,
+        startIndex: index,
+        resolveImage: (i) => readPageLogic.resolveImageForExternalViewer(i),
+      );
+      return;
+    }
+
+    String? target;
+    switch (readPageState.readPageInfo.mode) {
+      case ReadMode.downloaded:
+        if (readPageState.images[index]?.path != null) {
+          target = _getDownloadedImageAbsolutePath(index);
+        }
+        break;
+      case ReadMode.archive:
+        if (readPageState.images[index] != null) {
+          target = _getArchiveImageAbsolutePath(index);
+        }
+        break;
+      case ReadMode.local:
+        target = readPageState.images[index]?.path;
+        break;
+      case ReadMode.online:
+        break;
+    }
+
+    if (target == null || target.isEmpty) {
+      toast('failed'.tr);
+      return;
+    }
+
+    await externalViewerService.openLocalFile(target);
+  }
+
   /// Desktop right-click context menu for online images.
   Future<void> showOnlineDesktopContextMenu({required int index, required BuildContext context, required Offset position}) async {
     final selected = await showMenu<String>(
@@ -328,6 +380,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
         PopupMenuItem(value: 'reload', child: Text('reload'.tr)),
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
         PopupMenuItem(value: 'copy_eh_page_url', child: Text('copyEHPageUrl'.tr)),
+        if (showExternalViewerAction) PopupMenuItem(value: 'open_external_viewer', child: Text('openInExternalViewer'.tr)),
         PopupMenuItem(value: 'save', child: Text('${'save'.tr}(${'resampleImage'.tr})')),
         if (readPageState.images[index]!.originalImageUrl != null && userSetting.hasLoggedIn())
           PopupMenuItem(value: 'save_original', child: Text('${'save'.tr}(${'originalImage'.tr})')),
@@ -344,6 +397,9 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
         break;
       case 'copy_eh_page_url':
         copyEHPageUrl(index);
+        break;
+      case 'open_external_viewer':
+        await openInExternalViewer(index);
         break;
       case 'save':
         await saveOnlineImage(index);
@@ -391,6 +447,14 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
               copyEHPageUrl(index);
             },
           ),
+          if (showExternalViewerAction)
+            CupertinoActionSheetAction(
+              child: ehActionSheetText('openInExternalViewer'.tr),
+              onPressed: () async {
+                backRoute();
+                await openInExternalViewer(index);
+              },
+            ),
           CupertinoActionSheetAction(
             child: ehActionSheetText('${'save'.tr}(${'resampleImage'.tr})'),
             onPressed: () async {
@@ -480,6 +544,14 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
               copyEHPageUrl(index);
             },
           ),
+          if (showExternalViewerAction)
+            CupertinoActionSheetAction(
+              child: ehActionSheetText('openInExternalViewer'.tr),
+              onPressed: () async {
+                backRoute();
+                await openInExternalViewer(index);
+              },
+            ),
           CupertinoActionSheetAction(
             child: ehActionSheetText('save'.tr),
             onPressed: () {
@@ -524,6 +596,14 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
               copyArchiveImageFile(index);
             },
           ),
+          if (showExternalViewerAction)
+            CupertinoActionSheetAction(
+              child: ehActionSheetText('openInExternalViewer'.tr),
+              onPressed: () async {
+                backRoute();
+                await openInExternalViewer(index);
+              },
+            ),
           CupertinoActionSheetAction(
             child: ehActionSheetText('save'.tr),
             onPressed: () {
@@ -554,6 +634,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       items: [
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
         PopupMenuItem(value: 'copy_eh_page_url', child: Text('copyEHPageUrl'.tr)),
+        if (showExternalViewerAction) PopupMenuItem(value: 'open_external_viewer', child: Text('openInExternalViewer'.tr)),
         PopupMenuItem(value: 'save', child: Text('save'.tr)),
         PopupMenuItem(value: 'redownload', child: Text('reDownload'.tr)),
         PopupMenuItem(value: 'open_read_setting', child: Text('setting'.tr)),
@@ -566,6 +647,9 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
         break;
       case 'copy_eh_page_url':
         copyEHPageUrl(index);
+        break;
+      case 'open_external_viewer':
+        await openInExternalViewer(index);
         break;
       case 'save':
         saveDownloadedImageFile(index);
@@ -595,6 +679,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
       items: [
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
+        if (showExternalViewerAction) PopupMenuItem(value: 'open_external_viewer', child: Text('openInExternalViewer'.tr)),
         PopupMenuItem(value: 'save', child: Text('save'.tr)),
         PopupMenuItem(value: 'open_read_setting', child: Text('setting'.tr)),
       ],
@@ -603,6 +688,9 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     switch (selected) {
       case 'copyImage':
         copyArchiveImageFile(index);
+        break;
+      case 'open_external_viewer':
+        await openInExternalViewer(index);
         break;
       case 'save':
         saveArchiveImageFile(index);

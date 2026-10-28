@@ -11,10 +11,12 @@ import 'package:jhentai/src/setting/read_setting.dart';
 import 'package:jhentai/src/setting/style_setting.dart';
 
 import '../../../routes/routes.dart';
+import '../../../service/external_viewer_service.dart';
 import '../../../service/log.dart';
 import '../../../utils/route_util.dart';
 import '../../../utils/text_input_formatter.dart';
 import '../../../utils/toast_util.dart';
+import '../../../widget/eh_alert_dialog.dart';
 import '../../home_page.dart';
 
 class SettingReadPage extends StatelessWidget {
@@ -23,6 +25,7 @@ class SettingReadPage extends StatelessWidget {
   final TextEditingController landscapeImageRegionWidthRatioController =
   TextEditingController(text: readSetting.landscapeImageRegionWidthRatio.value.toString());
   final TextEditingController imageMaxKilobytesController = TextEditingController(text: readSetting.maxImageKilobyte.value.toString());
+  final TextEditingController externalViewerArgsController = TextEditingController(text: readSetting.externalViewerArgs.value ?? '');
 
   SettingReadPage({Key? key}) : super(key: key);
 
@@ -56,6 +59,11 @@ class SettingReadPage extends StatelessWidget {
                   if (readSetting.enableMaxImageKilobyte.isTrue) _buildImageMaxKilobytes(context).fadeIn(const Key('imageMaxKilobytes')).center(),
                   if (GetPlatform.isDesktop) _buildUseThirdPartyViewer().center(),
                   if (GetPlatform.isDesktop) _buildThirdPartyViewerPath().center(),
+                  if (GetPlatform.isDesktop && (readSetting.thirdPartyViewerPath.value?.trim().isNotEmpty ?? false)) ...[
+                    _buildExternalViewerStreamMode().center(),
+                    _buildExternalViewerArgs(context).center(),
+                    const _ExternalViewerCleanupTile().center(),
+                  ],
                   if (GetPlatform.isDesktop) _buildKeyboardShortcuts(context).center(),
                   if (GetPlatform.isMobile) _buildDeviceDirection().center(),
                   if (GetPlatform.isMobile) _buildEnableOrientationSpecificReadDirection().center(),
@@ -597,6 +605,65 @@ class SettingReadPage extends StatelessWidget {
     );
   }
 
+  Widget _buildExternalViewerStreamMode() {
+    return ListTile(
+      title: Text('externalViewerStreamMode'.tr),
+      subtitle: Text('externalViewerStreamModeHint'.tr),
+      trailing: SizedBox(
+        width: 190,
+        child: DropdownButton<ExternalViewerStreamMode>(
+          value: readSetting.externalViewerStreamMode.value,
+          isExpanded: true,
+          elevation: 4,
+          alignment: AlignmentDirectional.centerEnd,
+          onChanged: (ExternalViewerStreamMode? newValue) {
+            if (newValue != null) {
+              readSetting.saveExternalViewerStreamMode(newValue);
+            }
+          },
+          items: [
+            DropdownMenuItem(child: Text('externalViewerStreamModeAuto'.tr), value: ExternalViewerStreamMode.auto),
+            DropdownMenuItem(child: Text('externalViewerStreamModeStream'.tr), value: ExternalViewerStreamMode.stream),
+            DropdownMenuItem(child: Text('externalViewerStreamModeWaitAll'.tr), value: ExternalViewerStreamMode.waitAll),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExternalViewerArgs(BuildContext context) {
+    return ListTile(
+      title: Text('externalViewerArgs'.tr),
+      subtitle: Text('externalViewerArgsHint'.tr),
+      trailing: SizedBox(
+        width: 230,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: externalViewerArgsController,
+                decoration: const InputDecoration(isDense: true, labelStyle: TextStyle(fontSize: 12)),
+                textAlign: TextAlign.center,
+                onSubmitted: (_) => _saveExternalViewerArgs(),
+              ),
+            ),
+            IconButton(
+              onPressed: _saveExternalViewerArgs,
+              icon: Icon(Icons.check, color: UIConfig.resumePauseButtonColor(context)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _saveExternalViewerArgs() {
+    final String value = externalViewerArgsController.text.trim();
+    readSetting.saveExternalViewerArgs(value.isEmpty ? null : value);
+    toast('saveSuccess'.tr);
+  }
+
   Widget _buildKeyboardShortcuts(BuildContext context) {
     return ListTile(
       title: Text('keyboardShortcuts'.tr),
@@ -789,6 +856,69 @@ class SettingReadPage extends StatelessWidget {
           DropdownMenuItem(child: Text('adaptive'.tr), value: TurnPageMode.adaptive),
         ],
       ).marginOnly(right: 12),
+    );
+  }
+}
+
+class _ExternalViewerCleanupTile extends StatefulWidget {
+  const _ExternalViewerCleanupTile();
+
+  @override
+  State<_ExternalViewerCleanupTile> createState() => _ExternalViewerCleanupTileState();
+}
+
+class _ExternalViewerCleanupTileState extends State<_ExternalViewerCleanupTile> {
+  int? _bytes;
+  bool _deleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final int bytes = await externalViewerService.tempFolderSize();
+    if (mounted) {
+      setState(() => _bytes = bytes);
+    }
+  }
+
+  Future<void> _delete() async {
+    final bool? confirmed = await Get.dialog<bool>(EHDialog(title: 'externalViewerCleanupConfirm'.tr));
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() => _deleting = true);
+    final int freed = await externalViewerService.clearAllTempFolders();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _deleting = false;
+      _bytes = 0;
+    });
+    toast(freed > 0 ? 'externalViewerCleanupDone'.trArgs([formatFileSize(freed)]) : 'externalViewerCleanupEmpty'.tr);
+    await _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int bytes = _bytes ?? 0;
+    final bool hasFiles = bytes > 0;
+
+    return ListTile(
+      title: Text('externalViewerCleanup'.tr),
+      subtitle: Text('${'externalViewerCleanupHint'.tr}: ${_bytes == null ? '...' : formatFileSize(bytes)}'),
+      trailing: _deleting
+          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+          : IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: hasFiles ? _delete : null,
+            ),
+      onTap: hasFiles && !_deleting ? _delete : null,
     );
   }
 }

@@ -15,6 +15,7 @@ import 'package:jhentai/src/service/app_update_service.dart';
 import 'package:jhentai/src/service/archive_download_service.dart';
 import 'package:jhentai/src/service/built_in_blocked_user_service.dart';
 import 'package:jhentai/src/service/cloud_service.dart';
+import 'package:jhentai/src/service/external_viewer_service.dart';
 import 'package:jhentai/src/service/frame_rate_service.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_download_service.dart';
 import 'package:jhentai/src/service/history_service.dart';
@@ -101,6 +102,7 @@ List<JHLifeCircleBean> lifeCircleBeans = [
   userSetting,
   keyboardShortcutSetting,
   builtInBlockedUserService,
+  externalViewerService,
 ];
 
 void main(List<String> args) async {

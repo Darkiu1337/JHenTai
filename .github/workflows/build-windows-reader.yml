@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - reader-features
+      - reader-external
       - anime4k-restore
   workflow_dispatch:
 
