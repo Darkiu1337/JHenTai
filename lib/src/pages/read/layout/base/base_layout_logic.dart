@@ -279,13 +279,6 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
     alignToTopTimer = Timer(delay, alignActiveContentToTop);
   }
 
-  /// Debounced top alignment for scrolling layouts, where the visible image
-  /// changes many times during a single gesture.
-  void scheduleAlignToTop([Duration delay = const Duration(milliseconds: 200)]) {
-    alignToTopTimer?.cancel();
-    alignToTopTimer = Timer(delay, alignActiveContentToTop);
-  }
-
   void toggleDisplayFirstPageAlone() {}
 
   void enterAutoMode();

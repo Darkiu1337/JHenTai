@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -98,8 +98,9 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
 
     keyHandlers.putIfAbsent(LogicalKeyboardKey.equal, () => logic.handleZoomIn);
     keyHandlers.putIfAbsent(LogicalKeyboardKey.add, () => logic.handleZoomIn);
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.numpadAdd, () => logic.handleZoomIn);
     keyHandlers.putIfAbsent(LogicalKeyboardKey.minus, () => logic.handleZoomOut);
-    keyHandlers.putIfAbsent(LogicalKeyboardKey.subtract, () => logic.handleZoomOut);
+    keyHandlers.putIfAbsent(LogicalKeyboardKey.numpadSubtract, () => logic.handleZoomOut);
 
     Widget child = AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -133,8 +134,9 @@ class _ReadPageState extends State<ReadPage> with ScrollStatusListener, WindowLi
                   key == LogicalKeyboardKey.arrowDown ||
                   key == LogicalKeyboardKey.equal ||
                   key == LogicalKeyboardKey.add ||
+                  key == LogicalKeyboardKey.numpadAdd ||
                   key == LogicalKeyboardKey.minus ||
-                  key == LogicalKeyboardKey.subtract) {
+                  key == LogicalKeyboardKey.numpadSubtract) {
                 return true;
               }
 
