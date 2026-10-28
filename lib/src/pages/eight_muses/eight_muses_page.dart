@@ -70,53 +70,58 @@ class EightMusesPage extends StatelessWidget {
     final List<String> recent = logic.recentSearches;
     final List<EightMusesTag> popular = logic.popularTags;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          children: [
-            Expanded(child: Text('search'.tr, style: Theme.of(context).textTheme.titleSmall)),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: logic.hideSuggestions,
+    /// Keeps taps inside the panel from counting as "outside the search field",
+    /// which would unfocus it and remove the panel before the chip's onPressed
+    /// runs (that made tapping a recent search fall back to the listing).
+    return TextFieldTapRegion(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text('search'.tr, style: Theme.of(context).textTheme.titleSmall)),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: logic.hideSuggestions,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (recent.isNotEmpty) ...[
+            _sectionTitle(context, 'recentSearches'.tr),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final String keyword in recent)
+                  ActionChip(
+                    label: Text(keyword),
+                    onPressed: () => logic.submitKeyword(keyword),
+                  ),
+              ],
             ),
+            const SizedBox(height: 20),
           ],
-        ),
-        const SizedBox(height: 8),
-        if (recent.isNotEmpty) ...[
-          _sectionTitle(context, 'recentSearches'.tr),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: [
-              for (final String keyword in recent)
-                ActionChip(
-                  label: Text(keyword),
-                  onPressed: () => logic.submitKeyword(keyword),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
+          _sectionTitle(context, 'popularTags'.tr),
+          if (logic.loadingTags && popular.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: LinearProgressIndicator(),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final EightMusesTag tag in popular)
+                  ActionChip(
+                    label: Text(tag.label),
+                    onPressed: () => logic.toggleIncludeTag(tag),
+                  ),
+              ],
+            ),
         ],
-        _sectionTitle(context, 'popularTags'.tr),
-        if (logic.loadingTags && popular.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: LinearProgressIndicator(),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: [
-              for (final EightMusesTag tag in popular)
-                ActionChip(
-                  label: Text(tag.label),
-                  onPressed: () => logic.toggleIncludeTag(tag),
-                ),
-            ],
-          ),
-      ],
+      ),
     );
   }
 

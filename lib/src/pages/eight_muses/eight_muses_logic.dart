@@ -73,6 +73,7 @@ class EightMusesLogic extends GetxController {
     state.listing = listing;
     state.config.reset();
     state.searchController.clear();
+    _hideSuggestions();
     await refresh();
   }
 
@@ -150,14 +151,18 @@ class EightMusesLogic extends GetxController {
     await refresh();
   }
 
-  /// Used by the gallery detail page: opens the tag as a fresh tag search.
+  /// Used by the gallery detail page: adds the tag to the current tag filter
+  /// (additive, so clicking several tags intersects them instead of replacing).
+  /// Keyword and the search-only options are cleared because tags drive the
+  /// request and the extra filters do not apply to tag listings.
   Future<void> searchTag(EightMusesTag tag) async {
+    state.config.excludeTags.remove(tag);
+    if (!state.config.includeTags.contains(tag)) {
+      state.config.includeTags.add(tag);
+    }
+
     state.config.keyword = '';
     state.searchController.clear();
-    state.config.includeTags
-      ..clear()
-      ..add(tag);
-    state.config.excludeTags.clear();
     state.config.contentType = EightMusesContentType.all;
     state.config.language = EightMusesLanguage.all;
     state.config.sort = EightMusesSort.relevance;
