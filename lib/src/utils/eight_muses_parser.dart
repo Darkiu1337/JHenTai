@@ -157,6 +157,32 @@ class EightMusesParser {
     return result;
   }
 
+  /// Tags of a gallery page, from the `.detail-genre-row` links.
+  ///
+  /// The row is the only place where the page exposes the real tags with both
+  /// slug and label (`<a href="/tag/big-breasts">Big Breasts</a>`); the JSON-LD
+  /// block only carries the content type ("Image Set"/"Manga").
+  static List<EightMusesTag> parseDetailTags(String html) {
+    final Match? row = RegExp(r'<div class="detail-genre-row">([\s\S]*?)</div>').firstMatch(html);
+    if (row == null) {
+      return const <EightMusesTag>[];
+    }
+
+    final List<EightMusesTag> tags = <EightMusesTag>[];
+    final Set<String> seen = <String>{};
+    for (final Match match in RegExp(r'href="/tag/([^"]+)"[^>]*>([^<]*)</a>').allMatches(row.group(1) ?? '')) {
+      final String slug = (match.group(1) ?? '').trim();
+      if (slug.isEmpty || !seen.add(slug)) {
+        continue;
+      }
+
+      final String label = unescapeHtml(match.group(2) ?? '').trim();
+      tags.add(EightMusesTag(slug: slug, label: label.isEmpty ? slug : label));
+    }
+
+    return tags;
+  }
+
   /// Metadata of a gallery page, or null when the page is not a gallery page.
   static EightMusesDetail? parseDetail(String html, int id) {
     final Map<String, dynamic>? creativeWork = _extractCreativeWork(html);
@@ -164,7 +190,7 @@ class EightMusesParser {
     String title = _stringValue(creativeWork?['name']) ?? _stringValue(creativeWork?['headline']) ?? '';
     String author = '';
     String description = _stringValue(creativeWork?['description']) ?? '';
-    final List<String> genres = <String>[];
+    final List<EightMusesTag> tags = parseDetailTags(html);
     int? pageCount;
 
     final dynamic authorValue = creativeWork?['author'];
@@ -172,13 +198,6 @@ class EightMusesParser {
       author = _stringValue(authorValue['name']) ?? '';
     } else if (authorValue is String) {
       author = authorValue;
-    }
-
-    final dynamic genreValue = creativeWork?['genre'];
-    if (genreValue is String && genreValue.isNotEmpty) {
-      genres.add(genreValue);
-    } else if (genreValue is List) {
-      genres.addAll(genreValue.map((dynamic e) => e.toString()).where((String e) => e.isNotEmpty));
     }
 
     final dynamic pagesValue = creativeWork?['numberOfPages'];
@@ -212,7 +231,7 @@ class EightMusesParser {
       pageCount: pageCount,
       rating: rating ?? 0,
       description: description,
-      genres: genres,
+      tags: tags,
       publishTime: _relativeTime2DateString(updated) ?? _nowString(),
     );
   }

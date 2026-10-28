@@ -150,6 +150,22 @@ class EightMusesLogic extends GetxController {
     await refresh();
   }
 
+  /// Used by the gallery detail page: opens the tag as a fresh tag search.
+  Future<void> searchTag(EightMusesTag tag) async {
+    state.config.keyword = '';
+    state.searchController.clear();
+    state.config.includeTags
+      ..clear()
+      ..add(tag);
+    state.config.excludeTags.clear();
+    state.config.contentType = EightMusesContentType.all;
+    state.config.language = EightMusesLanguage.all;
+    state.config.sort = EightMusesSort.relevance;
+
+    _hideSuggestions();
+    await refresh();
+  }
+
   void _hideSuggestions() {
     if (state.searchFocusNode.hasFocus) {
       state.searchFocusNode.unfocus();

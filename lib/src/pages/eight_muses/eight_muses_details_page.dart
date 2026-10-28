@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/config/ui_config.dart';
 import 'package:jhentai/src/model/eight_muses_detail.dart';
+import 'package:jhentai/src/model/eight_muses_search.dart';
 import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/model/gallery_history_model.dart';
 import 'package:jhentai/src/model/gallery_image.dart';
 import 'package:jhentai/src/model/gallery_thumbnail.dart';
 import 'package:jhentai/src/model/read_page_info.dart';
 import 'package:jhentai/src/network/eight_muses_request.dart';
+import 'package:jhentai/src/pages/eight_muses/eight_muses_logic.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_download_service.dart';
 import 'package:jhentai/src/service/history_service.dart';
@@ -85,7 +87,7 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
           uploader: loaded.author,
           publishTime: loaded.publishTime,
           isExpunged: false,
-          tags: loaded.genres,
+          tags: loaded.tagLabels,
         ),
       );
     } catch (e, s) {
@@ -173,6 +175,18 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
     );
 
     toast('${'beginToDownload'.tr}: ${loaded.title}', isCenter: false);
+  }
+
+  /// Opens the 8muses tab filtered by [tag]. On desktop the results show up in
+  /// the left column while this page stays on the right.
+  void _searchTag(EightMusesTag tag) {
+    toRoute(Routes.eightMuses);
+
+    final EightMusesLogic logic = Get.isRegistered<EightMusesLogic>()
+        ? Get.find<EightMusesLogic>()
+        : Get.put<EightMusesLogic>(EightMusesLogic(), permanent: true);
+
+    logic.searchTag(tag);
   }
 
   Future<void> _openInBrowser() async {
@@ -301,13 +315,21 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
           padding: const EdgeInsets.only(top: 4),
           child: Text('${loaded.pageCount} ${'pageCount'.tr}', style: TextStyle(color: UIConfig.galleryCardTextColor(context))),
         ),
-        if (loaded.genres.isNotEmpty)
+        if (loaded.tags.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Wrap(
               spacing: 6,
               runSpacing: 4,
-              children: loaded.genres.map((String genre) => Chip(label: Text(genre), visualDensity: VisualDensity.compact)).toList(),
+              children: loaded.tags
+                  .map(
+                    (EightMusesTag tag) => ActionChip(
+                      label: Text(tag.label),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => _searchTag(tag),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         Padding(

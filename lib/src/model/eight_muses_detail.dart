@@ -1,3 +1,5 @@
+import 'package:jhentai/src/model/eight_muses_search.dart';
+
 /// Metadata of an 8muses gallery, as far as the site exposes it.
 class EightMusesDetail {
   final int id;
@@ -7,9 +9,9 @@ class EightMusesDetail {
   final double rating;
   final String description;
 
-  /// Free-form genres. The site usually only says "Image Set" or "Manga", so
-  /// this is often a single item (or empty).
-  final List<String> genres;
+  /// Real tags of the gallery, parsed from the detail page's genre row.
+  /// Empty when the gallery has no tags.
+  final List<EightMusesTag> tags;
 
   /// `yyyy-MM-dd HH:mm`, derived from the site's relative "updated" field.
   final String publishTime;
@@ -21,12 +23,14 @@ class EightMusesDetail {
     required this.pageCount,
     required this.rating,
     required this.description,
-    required this.genres,
+    required this.tags,
     required this.publishTime,
   });
 
+  List<String> get tagLabels => tags.map((EightMusesTag tag) => tag.label).toList();
+
   @override
   String toString() {
-    return 'EightMusesDetail{id: $id, title: $title, author: $author, pageCount: $pageCount, rating: $rating, genres: $genres}';
+    return 'EightMusesDetail{id: $id, title: $title, author: $author, pageCount: $pageCount, rating: $rating, tags: $tags}';
   }
 }
