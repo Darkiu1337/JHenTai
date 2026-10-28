@@ -974,6 +974,13 @@ favnote：匹配收藏备注
       'permissionPermanentlyDeniedHint': '保存到相册需要相应权限。请在系统设置中为应用开启完全访问权限',
       'goToSetting': '去设置',
       'other': '其他',
+      'eightMuses': '8muses',
+      'browseAll': '浏览全部',
+      'openInBrowser': '在浏览器中打开',
+      'copyLink': '复制链接',
+      'copySuccess': '已复制',
+      'noMore': '没有更多结果',
+      'retry': '重试',
     };
   }
 }

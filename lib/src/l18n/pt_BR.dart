@@ -979,6 +979,13 @@ Exemplo 2: Bloquear comentários com pontuação não superior a 10————C
       'permissionPermanentlyDeniedHint': 'Salvar no álbum requer permissão. Vá às configurações do sistema e conceda acesso total ao aplicativo',
       'goToSetting': 'Ir para as configurações',
       'other': 'Outros',
+      'eightMuses': '8muses',
+      'browseAll': 'Explorar tudo',
+      'openInBrowser': 'Abrir no navegador',
+      'copyLink': 'Copiar link',
+      'copySuccess': 'Copiado',
+      'noMore': 'Sem mais resultados',
+      'retry': 'Tentar novamente',
     };
   }
 }

@@ -975,6 +975,13 @@ favnote：配對收藏備註
       'permissionPermanentlyDeniedHint': '保存到相簿需要相應權限。請在系統設定中為應用開啟完全訪問權限',
       'goToSetting': '去設定',
       'other': '其它',
+      'eightMuses': '8muses',
+      'browseAll': '瀏覽全部',
+      'openInBrowser': '在瀏覽器中開啟',
+      'copyLink': '複製連結',
+      'copySuccess': '已複製',
+      'noMore': '沒有更多結果',
+      'retry': '重試',
     };
   }
 }

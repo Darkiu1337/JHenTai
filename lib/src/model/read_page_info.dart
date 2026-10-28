@@ -1,4 +1,5 @@
 import 'gallery_image.dart';
+import 'gallery_thumbnail.dart';
 
 import '../setting/read_setting.dart';
 
@@ -31,6 +32,10 @@ class ReadPageInfo {
   /// used for archive&local
   List<GalleryImage>? images;
 
+  /// Pre-resolved thumbnails of an external source (8muses). When set together
+  /// with [images] in [ReadMode.online], the reader never parses E-H pages.
+  List<GalleryThumbnail>? thumbnails;
+
   /// used for initialize
   bool useSuperResolution;
 
@@ -47,6 +52,7 @@ class ReadPageInfo {
     this.isOriginal = false,
     required this.readProgressRecordStorageKey,
     this.images,
+    this.thumbnails,
     required this.useSuperResolution,
     this.readDirection,
   }) : currentImageIndex = initialIndex;

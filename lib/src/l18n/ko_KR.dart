@@ -968,6 +968,13 @@ Example 2: Block comments with a score not exceeding 10————Comment Score
       'permissionPermanentlyDeniedHint': '앨범에 저장하려면 권한이 필요합니다. 시스템 설정에서 앱에 전체 액세스 권한을 부여해 주세요',
       'goToSetting': '설정으로 이동',
       'other': '기타',
+      'eightMuses': '8muses',
+      'browseAll': '전체 탐색',
+      'openInBrowser': '브라우저에서 열기',
+      'copyLink': '링크 복사',
+      'copySuccess': '복사됨',
+      'noMore': '더 이상 결과 없음',
+      'retry': '다시 시도',
     };
   }
 }

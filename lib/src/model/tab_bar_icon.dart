@@ -9,6 +9,7 @@ enum TabBarIconNameEnum {
   favorite,
   history,
   download,
+  eightMuses,
   setting,
 }
 

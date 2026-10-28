@@ -4,6 +4,8 @@ import 'package:jhentai/src/pages/details/details_page.dart';
 import 'package:jhentai/src/pages/details/thumbnails/thumbnails_page.dart';
 import 'package:jhentai/src/pages/download/download_base_page.dart';
 import 'package:jhentai/src/pages/download_search/download_search_page.dart';
+import 'package:jhentai/src/pages/eight_muses/eight_muses_details_page.dart';
+import 'package:jhentai/src/pages/eight_muses/eight_muses_page.dart';
 import 'package:jhentai/src/pages/gallery_image/gallery_image_page.dart';
 import 'package:jhentai/src/pages/gallery/dashboard/dashboard_page.dart';
 import 'package:jhentai/src/pages/gallery/simple/gallery_page.dart';
@@ -82,9 +84,11 @@ class Routes {
   static const String desktopSearch = "/desktop_search";
   static const String mobileV2Search = "/mobile_v2_search";
   static const String downloadSearch = "/download_search";
+  static const String eightMuses = "/eight_muses";
 
   /// right
   static const String details = "/details";
+  static const String eightMusesDetails = "/eight_muses_details";
   static const String comment = "/comment";
   static const String thumbnails = "/thumbnails";
   static const String webview = "/webview";
@@ -253,6 +257,17 @@ class Routes {
       page: () => DownloadSearchPage(),
       transition: defaultTransition,
       side: Side.left,
+    ),
+    EHPage(
+      name: eightMuses,
+      page: () => const EightMusesPage(),
+      transition: defaultTransition,
+      side: Side.left,
+    ),
+    EHPage(
+      name: eightMusesDetails,
+      page: () => const EightMusesDetailsPage().withEscOrFifthButton2BackRightRoute(),
+      transition: defaultTransition,
     ),
     EHPage(
       name: singleImagePage,

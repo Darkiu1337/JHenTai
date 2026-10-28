@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/extension/list_extension.dart';
 import 'package:jhentai/src/pages/download/download_base_page.dart';
+import 'package:jhentai/src/pages/eight_muses/eight_muses_page.dart';
 import 'package:jhentai/src/pages/gallery/simple/gallery_page_logic.dart';
 import 'package:jhentai/src/pages/history/history_page.dart';
 import 'package:jhentai/src/pages/gallery/simple/gallery_page.dart';
@@ -106,6 +107,14 @@ class DesktopLayoutPageState with DoubleTapToRefreshStateMixin {
         selectedIcon: const Icon(Icons.download),
         unselectedIcon: const Icon(Icons.download_outlined),
         page: () => const DownloadPage(),
+        shouldRender: false,
+      ),
+      TabBarIcon(
+        name: TabBarIconNameEnum.eightMuses,
+        routeName: Routes.eightMuses,
+        selectedIcon: const Icon(Icons.public),
+        unselectedIcon: const Icon(Icons.public_outlined),
+        page: () => const EightMusesPage(),
         shouldRender: false,
       ),
       TabBarIcon(

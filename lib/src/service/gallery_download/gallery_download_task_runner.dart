@@ -114,6 +114,15 @@ class _GalleryDownloadTaskRunner {
       }
 
       GalleryDownloadInfo galleryDownloadInfo = _service.galleryDownloadInfos[gallery.gid]!;
+
+      /// External sources (8muses) expose the final page url up front, so there
+      /// is no E-H detail page to parse.
+      final int? externalId = eightMusesExternalId(gallery.gid);
+      if (externalId != null) {
+        galleryDownloadInfo.imageHrefs[serialNo] = EightMusesParser.pageUrl(externalId, serialNo + 1);
+        return _service._submitImageTask(gallery, serialNo, () => parseImageUrlTask(serialNo));
+      }
+
       int requestPageIndex = serialNo ~/ galleryDownloadInfo.thumbnailsCountPerPage;
 
       DetailPageInfo detailPageInfo;
@@ -171,6 +180,23 @@ class _GalleryDownloadTaskRunner {
       }
 
       GalleryDownloadInfo galleryDownloadInfo = _service.galleryDownloadInfos[gallery.gid]!;
+
+      /// External sources (8muses): the href is already the final image url.
+      final int? externalId = eightMusesExternalId(gallery.gid);
+      if (externalId != null) {
+        final String href = galleryDownloadInfo.imageHrefs[serialNo]!;
+        final GalleryImage image = GalleryImage(url: href);
+        image.path = DownloadPathResolver.computeImageDownloadRelativePath(gallery.toGalleryDownloadedData(), href, serialNo);
+        image.downloadStatus = DownloadStatus.downloading;
+
+        await _service._saveNewImageInfoInDatabase(image, serialNo, gallery.gid);
+
+        galleryDownloadInfo.upsertImage(serialNo, image);
+
+        _service.update(['${_service.downloadImageId}::${gallery.gid}::$serialNo', '${_service.downloadImageUrlId}::${gallery.gid}::$serialNo']);
+
+        return _service._submitImageTask(gallery, serialNo, () => downloadImageTask(serialNo));
+      }
 
       /// If this is a update from old gallery, try to copy from existing old image first
       if (gallery.oldVersionGalleryUrl != null) {
@@ -271,21 +297,35 @@ class _GalleryDownloadTaskRunner {
       final String downloadUrl = _downloadUrlFor(gallery.toGalleryDownloadedData(), image);
       String path = DownloadPathResolver.computeImageDownloadAbsolutePath(gallery.toGalleryDownloadedData(), downloadUrl, serialNo);
 
-      await tryLoadFromCacheInsteadDownload(image, downloadUrl, serialNo, path);
-      if (image.downloadStatus == DownloadStatus.downloaded) {
-        return;
+      final bool isExternal = sourceOfGid(gallery.gid) == GallerySource.eightMuses;
+
+      /// The E-H disk cache only knows E-H urls; external images are fetched
+      /// directly by their own client.
+      if (!isExternal) {
+        await tryLoadFromCacheInsteadDownload(image, downloadUrl, serialNo, path);
+        if (image.downloadStatus == DownloadStatus.downloaded) {
+          return;
+        }
       }
 
       Response response;
       try {
         response = await retry(
-          () => ehRequest.download(
-            url: downloadUrl,
-            path: path,
-            receiveTimeout: 3 * 60 * 1000,
-            cancelToken: galleryDownloadInfo.cancelToken,
-            onReceiveProgress: (int count, int total) => galleryDownloadInfo.speedComputer.updateProgress(count, total, serialNo),
-          ),
+          () => isExternal
+              ? eightMusesRequest.download(
+                  url: downloadUrl,
+                  path: path,
+                  receiveTimeout: 3 * 60 * 1000,
+                  cancelToken: galleryDownloadInfo.cancelToken,
+                  onReceiveProgress: (int count, int total) => galleryDownloadInfo.speedComputer.updateProgress(count, total, serialNo),
+                )
+              : ehRequest.download(
+                  url: downloadUrl,
+                  path: path,
+                  receiveTimeout: 3 * 60 * 1000,
+                  cancelToken: galleryDownloadInfo.cancelToken,
+                  onReceiveProgress: (int count, int total) => galleryDownloadInfo.speedComputer.updateProgress(count, total, serialNo),
+                ),
           maxAttempts: _maxRetryTimes,
 
           /// 403 is due to broken H@H node, we should re-parse

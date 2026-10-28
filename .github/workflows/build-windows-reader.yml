@@ -5,6 +5,7 @@ on:
     branches:
       - reader-features
       - reader-external
+      - eightmuses
       - anime4k-restore
   workflow_dispatch:
 

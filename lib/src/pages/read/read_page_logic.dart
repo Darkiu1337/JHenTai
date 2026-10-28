@@ -13,6 +13,7 @@ import 'package:jhentai/src/exception/eh_parse_exception.dart';
 import 'package:jhentai/src/exception/eh_site_exception.dart';
 import 'package:jhentai/src/extension/dio_exception_extension.dart';
 import 'package:jhentai/src/extension/get_logic_extension.dart';
+import 'package:jhentai/src/model/gallery_source.dart';
 import 'package:jhentai/src/model/tap_zone_config.dart';
 import 'package:jhentai/src/pages/read/layout/base/base_layout_logic.dart';
 import 'package:jhentai/src/pages/read/layout/horizontal_double_column/horizontal_double_column_layout_logic.dart';
@@ -506,6 +507,20 @@ class ReadPageLogic extends GetxController with WidgetsBindingObserver, GalleryI
   }
 
   Future<void> reloadImage(int index) async {
+    /// External sources (8muses) hand the reader final image urls, so there is
+    /// no E-H page to re-parse: a cache-busting query parameter is enough.
+    if (sourceOfGid(state.readPageInfo.gid) == GallerySource.eightMuses) {
+      final GalleryImage? image = state.images[index];
+      if (image == null) {
+        return;
+      }
+
+      clearDiskCachedImage(image.url);
+      state.images[index] = image.copyWith(url: '${image.url.split('?').first}?r=${DateTime.now().millisecondsSinceEpoch}');
+      updateSafely(['$onlineImageId::$index']);
+      return;
+    }
+
     String? reloadKey;
     if (state.images[index] != null) {
       reloadKey = state.images[index]!.reloadKey;

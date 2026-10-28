@@ -5,6 +5,7 @@ import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/model/gallery_image_page_url.dart';
+import 'package:jhentai/src/model/gallery_source.dart';
 import 'package:jhentai/src/model/gallery_url.dart';
 import 'package:jhentai/src/pages/details/details_page_logic.dart';
 import 'package:jhentai/src/pages/gallery_image/gallery_image_page_logic.dart';
@@ -26,6 +27,7 @@ import '../setting/advanced_setting.dart';
 import '../utils/route_util.dart';
 import '../utils/screen_size_util.dart';
 import '../utils/snack_util.dart';
+import '../utils/eight_muses_parser.dart';
 
 const int left = 1;
 const int right = 2;
@@ -164,12 +166,7 @@ class _HomePageState extends State<HomePage> with LoginRequiredMixin, WindowList
         GalleryUrl? galleryUrl = GalleryUrl.tryParse(file.path);
         if (galleryUrl != null) {
           untilRoute(currentRoute: Routes.details, predicate: (route) => route.settings.name != Routes.read);
-          toRoute(
-            Routes.details,
-            arguments: DetailsPageArgument(galleryUrl: galleryUrl),
-            offAllBefore: false,
-            preventDuplicates: false,
-          );
+          _openGalleryUrl(galleryUrl);
           return;
         }
 
@@ -210,16 +207,7 @@ class _HomePageState extends State<HomePage> with LoginRequiredMixin, WindowList
 
       GalleryUrl? galleryUrl = GalleryUrl.tryParse(url);
       if (galleryUrl != null) {
-        if (!galleryUrl.isEH && !userSetting.hasLoggedIn()) {
-          showLoginToast();
-          return;
-        }
-        toRoute(
-          Routes.details,
-          arguments: DetailsPageArgument(galleryUrl: galleryUrl),
-          offAllBefore: false,
-          preventDuplicates: false,
-        );
+        _openGalleryUrl(galleryUrl);
         return;
       }
 
@@ -235,6 +223,34 @@ class _HomePageState extends State<HomePage> with LoginRequiredMixin, WindowList
 
       toast('Invalid jump link', isShort: false);
     });
+  }
+
+  /// Opens a parsed gallery url on the right source.
+  ///
+  /// External galleries (8muses) don't need an E-H login and have their own,
+  /// lighter detail page; everything else keeps the E-H flow.
+  void _openGalleryUrl(GalleryUrl galleryUrl) {
+    if (galleryUrl.source == GallerySource.eightMuses) {
+      toRoute(
+        Routes.eightMusesDetails,
+        arguments: EightMusesParser.galleryFromUrl(galleryUrl),
+        offAllBefore: false,
+        preventDuplicates: false,
+      );
+      return;
+    }
+
+    if (!galleryUrl.isEH && !userSetting.hasLoggedIn()) {
+      showLoginToast();
+      return;
+    }
+
+    toRoute(
+      Routes.details,
+      arguments: DetailsPageArgument(galleryUrl: galleryUrl),
+      offAllBefore: false,
+      preventDuplicates: false,
+    );
   }
 
   /// Extract the url following `-g`/`--gallery` from launch arguments. Returns
@@ -292,18 +308,7 @@ class _HomePageState extends State<HomePage> with LoginRequiredMixin, WindowList
       snack(
         'galleryUrlDetected'.tr,
         '${'galleryUrlDetectedHint'.tr}: ${galleryUrl.url}',
-        onPressed: () {
-          if (!galleryUrl.isEH && !userSetting.hasLoggedIn()) {
-            showLoginToast();
-            return;
-          }
-          toRoute(
-            Routes.details,
-            arguments: DetailsPageArgument(galleryUrl: galleryUrl),
-            offAllBefore: false,
-            preventDuplicates: false,
-          );
-        },
+        onPressed: () => _openGalleryUrl(galleryUrl),
         isShort: true,
       );
     } else if (galleryImagePageUrl != null) {

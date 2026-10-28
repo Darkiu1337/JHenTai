@@ -19,6 +19,7 @@ import '../../exception/eh_site_exception.dart';
 import '../../mixin/scroll_to_top_logic_mixin.dart';
 import '../../mixin/scroll_to_top_state_mixin.dart';
 import '../../model/gallery.dart';
+import '../../model/gallery_source.dart';
 import '../../network/eh_request.dart';
 import '../../routes/routes.dart';
 import '../../service/local_block_rule_service.dart';
@@ -382,6 +383,15 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
   }
 
   void handleTapGalleryCard(Gallery gallery) async {
+    /// External sources (8muses) have their own, lighter detail page.
+    if (gallery.galleryUrl.source == GallerySource.eightMuses) {
+      toRoute(
+        Routes.eightMusesDetails,
+        arguments: gallery,
+      );
+      return;
+    }
+
     toRoute(
       Routes.details,
       arguments: DetailsPageArgument(galleryUrl: gallery.galleryUrl, gallery: gallery),

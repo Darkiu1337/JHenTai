@@ -10,6 +10,7 @@ import '../../../model/tab_bar_icon.dart';
 import '../../../routes/routes.dart';
 import '../../../setting/preference_setting.dart';
 import '../../download/download_base_page.dart';
+import '../../eight_muses/eight_muses_page.dart';
 import '../../favorite/favorite_page.dart';
 import '../../favorite/favorite_page_logic.dart';
 import '../../gallery/dashboard/dashboard_page.dart';
@@ -110,6 +111,14 @@ class MobileLayoutPageV2State with DoubleTapToRefreshStateMixin {
         selectedIcon: const Icon(Icons.download),
         unselectedIcon: const Icon(Icons.download_outlined),
         page: () => const DownloadPage(),
+        shouldRender: false,
+      ),
+      TabBarIcon(
+        name: TabBarIconNameEnum.eightMuses,
+        routeName: Routes.eightMuses,
+        selectedIcon: const Icon(Icons.public),
+        unselectedIcon: const Icon(Icons.public_outlined),
+        page: () => const EightMusesPage(),
         shouldRender: false,
       ),
       TabBarIcon(

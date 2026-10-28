@@ -17,6 +17,7 @@ import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:get/get_utils/get_utils.dart';
 import 'package:jhentai/src/consts/eh_consts.dart';
 import 'package:jhentai/src/extension/get_logic_extension.dart';
+import 'package:jhentai/src/model/gallery_source.dart';
 import 'package:jhentai/src/network/eh_request.dart';
 import 'package:jhentai/src/service/gallery_download/download_path_resolver.dart';
 import 'package:jhentai/src/service/gallery_download/eh_image_exception_matcher.dart';
@@ -372,6 +373,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
 
   /// Desktop right-click context menu for online images.
   Future<void> showOnlineDesktopContextMenu({required int index, required BuildContext context, required Offset position}) async {
+    final bool isEHSource = sourceOfGid(readPageState.readPageInfo.gid) == GallerySource.eh;
     final selected = await showMenu<String>(
       context: context,
       popUpAnimationStyle: AnimationStyle.noAnimation,
@@ -379,7 +381,7 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
       items: [
         PopupMenuItem(value: 'reload', child: Text('reload'.tr)),
         PopupMenuItem(value: 'copyImage', child: Text('copyImage'.tr)),
-        PopupMenuItem(value: 'copy_eh_page_url', child: Text('copyEHPageUrl'.tr)),
+        if (isEHSource) PopupMenuItem(value: 'copy_eh_page_url', child: Text('copyEHPageUrl'.tr)),
         if (showExternalViewerAction) PopupMenuItem(value: 'open_external_viewer', child: Text('openInExternalViewer'.tr)),
         PopupMenuItem(value: 'save', child: Text('${'save'.tr}(${'resampleImage'.tr})')),
         if (readPageState.images[index]!.originalImageUrl != null && userSetting.hasLoggedIn())
@@ -415,6 +417,8 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
 
   /// Mobile bottom action sheet for online images.
   void showOnlineMobileBottomMenu(int index, BuildContext context) {
+    final bool isEHSource = sourceOfGid(readPageState.readPageInfo.gid) == GallerySource.eh;
+
     showCupertinoModalPopup(
       context: context,
       builder: (_) => CupertinoActionSheet(
@@ -440,13 +444,14 @@ abstract class BaseLayoutLogic extends GetxController with GetTickerProviderStat
               copyOnlineImage(index);
             },
           ),
-          CupertinoActionSheetAction(
-            child: ehActionSheetText('copyEHPageUrl'.tr),
-            onPressed: () async {
-              backRoute();
-              copyEHPageUrl(index);
-            },
-          ),
+          if (isEHSource)
+            CupertinoActionSheetAction(
+              child: ehActionSheetText('copyEHPageUrl'.tr),
+              onPressed: () async {
+                backRoute();
+                copyEHPageUrl(index);
+              },
+            ),
           if (showExternalViewerAction)
             CupertinoActionSheetAction(
               child: ehActionSheetText('openInExternalViewer'.tr),

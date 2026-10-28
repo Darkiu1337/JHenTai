@@ -979,6 +979,13 @@ Example 2: Block comments with a score not exceeding 10————Comment Score
       'permissionPermanentlyDeniedHint': 'Saving to album requires permission. Please go to system settings and grant full access to this app',
       'goToSetting': 'Go to settings',
       'other': 'Other',
+      'eightMuses': '8muses',
+      'browseAll': 'Browse all',
+      'openInBrowser': 'Open in browser',
+      'copyLink': 'Copy link',
+      'copySuccess': 'Copied',
+      'noMore': 'No more results',
+      'retry': 'Retry',
     };
   }
 }
