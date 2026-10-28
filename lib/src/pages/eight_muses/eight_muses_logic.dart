@@ -4,6 +4,7 @@ import 'package:jhentai/src/model/eight_muses_search.dart';
 import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/network/eight_muses_request.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_state.dart';
+import 'package:jhentai/src/service/already_read_service.dart';
 import 'package:jhentai/src/service/eight_muses_catalog_service.dart';
 import 'package:jhentai/src/service/local_favorite_service.dart';
 import 'package:jhentai/src/service/log.dart';
@@ -26,11 +27,24 @@ class EightMusesLogic extends GetxController {
   /// Lets a refresh invalidate in-flight page requests.
   int _requestSerial = 0;
 
+  Worker? _alreadyReadWorker;
+
   @override
   void onInit() {
     super.onInit();
 
     localFavoriteService.ensureRestored();
+    alreadyReadService.ensureRestored();
+
+    /// Marking a card as already read removes it from the open grid.
+    _alreadyReadWorker = ever(alreadyReadService.galleries, (_) {
+      final int length = state.galleries.length;
+      state.galleries.removeWhere((gallery) => alreadyReadService.contains(gallery.gid));
+
+      if (state.galleries.length != length) {
+        update([bodyId]);
+      }
+    });
 
     state.searchFocusNode.addListener(_onFocusChanged);
     loadMore();
@@ -38,6 +52,7 @@ class EightMusesLogic extends GetxController {
 
   @override
   void onClose() {
+    _alreadyReadWorker?.dispose();
     state.searchFocusNode.removeListener(_onFocusChanged);
     state.searchFocusNode.dispose();
     state.searchController.dispose();
@@ -266,18 +281,24 @@ class EightMusesLogic extends GetxController {
           break;
         }
 
-        final List<Gallery> filtered = state.config.isLocalFilterMode ? _applyLocalFilters(raw) : raw;
+        final List<Gallery> filtered = (state.config.isLocalFilterMode ? _applyLocalFilters(raw) : raw)
+            .where((Gallery gallery) => !alreadyReadService.contains(gallery.gid))
+            .toList();
         state.galleries.addAll(filtered);
 
         final bool isLastPage = raw.length < expectedPageSize;
-        if (filtered.isNotEmpty || !state.config.isLocalFilterMode || isLastPage) {
+
+        /// A page can disappear completely when every card is already read (or
+        /// filtered out locally), so keep pulling pages until something is
+        /// visible or the site runs out.
+        if (filtered.isNotEmpty || isLastPage) {
           state.loadingState = isLastPage ? LoadingState.noMore : LoadingState.idle;
           break;
         }
       }
 
       if (state.loadingState == LoadingState.loading) {
-        state.loadingState = LoadingState.idle;
+        state.loadingState = state.galleries.isEmpty ? LoadingState.noData : LoadingState.idle;
       }
     } on DioException catch (e) {
       log.error('Load 8muses page failed', e.error);

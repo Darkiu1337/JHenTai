@@ -17,6 +17,7 @@ class SettingPageListStylePage extends StatelessWidget {
     PageListStyleItem(name: 'favorite'.tr, route: Routes.favorite, show: () => true),
     PageListStyleItem(name: 'watched'.tr, route: Routes.watched, show: () => true),
     PageListStyleItem(name: 'history'.tr, route: Routes.history, show: () => true),
+    PageListStyleItem(name: 'alreadyRead'.tr, route: Routes.alreadyRead, show: () => true),
   ];
 
   @override

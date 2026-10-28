@@ -14,11 +14,13 @@ import 'package:jhentai/src/pages/eight_muses/eight_muses_logic.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_download_service.dart';
 import 'package:jhentai/src/service/history_service.dart';
+import 'package:jhentai/src/service/already_read_service.dart';
 import 'package:jhentai/src/service/local_favorite_service.dart';
 import 'package:jhentai/src/service/log.dart';
 import 'package:jhentai/src/service/read_progress_service.dart';
 import 'package:jhentai/src/setting/download_setting.dart';
 import 'package:jhentai/src/setting/style_setting.dart';
+import 'package:jhentai/src/utils/convert_util.dart';
 import 'package:jhentai/src/utils/eight_muses_parser.dart';
 import 'package:jhentai/src/utils/route_util.dart';
 import 'package:jhentai/src/utils/toast_util.dart';
@@ -56,6 +58,7 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
     super.initState();
 
     localFavoriteService.ensureRestored();
+    alreadyReadService.ensureRestored();
 
     /// Set before the first build: calling setState from initState would run
     /// while the framework is still building the parent.
@@ -249,6 +252,11 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
     toast(added ? 'localFavoriteAdded'.tr : 'localFavoriteRemoved'.tr);
   }
 
+  Future<void> _toggleAlreadyRead() async {
+    final bool added = await alreadyReadService.toggle(gallery2GalleryHistoryModel(_favoriteSnapshot()));
+    toast(added ? 'alreadyReadAdded'.tr : 'alreadyReadRemoved'.tr);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -276,6 +284,17 @@ class _EightMusesDetailsPageState extends State<EightMusesDetailsPage> {
                 color: isFavorite ? Colors.redAccent : null,
               ),
               onPressed: _toggleLocalFavorite,
+            );
+          }),
+          Obx(() {
+            final bool isAlreadyRead = alreadyReadService.contains(gallery.gid);
+            return IconButton(
+              tooltip: isAlreadyRead ? 'removeFromAlreadyRead'.tr : 'markAsAlreadyRead'.tr,
+              icon: Icon(
+                isAlreadyRead ? Icons.check_circle : Icons.check_circle_outline,
+                color: isAlreadyRead ? Theme.of(context).colorScheme.primary : null,
+              ),
+              onPressed: _toggleAlreadyRead,
             );
           }),
           IconButton(

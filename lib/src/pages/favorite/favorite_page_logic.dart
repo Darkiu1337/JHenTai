@@ -49,6 +49,10 @@ class FavoritePageLogic extends BasePageLogic {
   @override
   bool get autoLoadForFirstTime => !state.localMode;
 
+  /// Favorites are a deliberate list: never hide an already-read gallery here.
+  @override
+  bool get hideAlreadyReadGalleries => false;
+
   @override
   Future<void> onInit() async {
     state.localMode = !userSetting.hasLoggedIn();

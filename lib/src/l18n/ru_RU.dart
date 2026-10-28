@@ -1010,6 +1010,15 @@ class ru_RU {
       'localFavoriteRemoved': 'Удалено из локальных избранных',
       'noLocalFavorites': 'Локальных избранных пока нет',
       'noLocalFavoritesHint': 'Откройте галерею 8muses и нажмите на сердечко, чтобы сохранить её здесь.',
+      'alreadyRead': 'Прочитанные',
+      'markAsAlreadyRead': 'Отметить как прочитанное',
+      'markRead': 'Отметить',
+      'alreadyReadAction': 'Прочитано',
+      'removeFromAlreadyRead': 'Убрать из прочитанных',
+      'alreadyReadAdded': 'Отмечено как прочитанное',
+      'alreadyReadRemoved': 'Убрано из прочитанных',
+      'noAlreadyRead': 'Нет галерей, отмеченных как прочитанные',
+      'noAlreadyReadHint': 'Используйте «Отметить» на странице галереи или в меню карточки.',
     };
   }
 }

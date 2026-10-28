@@ -18,6 +18,7 @@ import 'package:jhentai/src/pages/details/comment/eh_comment.dart';
 import 'package:jhentai/src/pages/download/download_base_page.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/service/archive_download_service.dart';
+import 'package:jhentai/src/service/already_read_service.dart';
 import 'package:jhentai/src/utils/uuid_util.dart';
 import 'package:jhentai/src/widget/eh_alert_dialog.dart';
 import 'package:jhentai/src/widget/eh_gallery_detail_dialog.dart';
@@ -873,12 +874,13 @@ class DetailsPage extends StatelessWidget with Scroll2TopPageMixin {
           builder: (_, BoxConstraints constraints) => ListView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-            itemExtent: max(UIConfig.detailsPageActionExtent, (constraints.maxWidth - UIConfig.detailPagePadding * 2) / 8),
+            itemExtent: max(UIConfig.detailsPageActionExtent, (constraints.maxWidth - UIConfig.detailPagePadding * 2) / 9),
             padding: EdgeInsets.zero,
             children: [
               _buildReadButton(context),
               _buildDownloadButton(context),
               _buildFavoriteButton(context),
+              _buildAlreadyReadButton(context),
               _buildRatingButton(context),
               _buildArchiveButton(context),
               _buildHHButton(context),
@@ -1030,6 +1032,41 @@ class DetailsPage extends StatelessWidget with Scroll2TopPageMixin {
           errorWidgetSameWithIdle: true,
         );
       },
+    );
+  }
+
+  Widget _buildAlreadyReadButton(BuildContext context) {
+    return GetBuilder<DetailsPageLogic>(
+      id: DetailsPageLogic.detailsId,
+      global: false,
+      init: logic,
+      builder: (_) => Obx(() {
+        bool disabled = state.galleryDetails == null && state.gallery == null;
+        bool alreadyRead = alreadyReadService.contains(state.galleryUrl.gid);
+
+        return IconTextButton(
+          width: UIConfig.detailsPageActionExtent,
+          icon: Icon(
+            alreadyRead ? Icons.check_circle : Icons.check_circle_outline,
+            color: disabled
+                ? UIConfig.detailsPageActionDisabledIconColor(context)
+                : alreadyRead
+                    ? UIConfig.resumePauseButtonColor(context)
+                    : UIConfig.detailsPageActionIconColor(context),
+          ),
+          text: Text(
+            alreadyRead ? 'alreadyReadAction'.tr : 'markRead'.tr,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: UIConfig.detailsPageActionTextSize,
+              color: disabled ? UIConfig.detailsPageActionDisabledIconColor(context) : UIConfig.detailsPageActionTextColor(context),
+              height: 1,
+            ),
+          ),
+          onPressed: disabled ? null : logic.handleTapAlreadyRead,
+        );
+      }),
     );
   }
 

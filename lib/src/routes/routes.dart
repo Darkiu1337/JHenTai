@@ -6,6 +6,7 @@ import 'package:jhentai/src/pages/download/download_base_page.dart';
 import 'package:jhentai/src/pages/download_search/download_search_page.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_details_page.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_page.dart';
+import 'package:jhentai/src/pages/already_read/already_read_page.dart';
 import 'package:jhentai/src/pages/gallery_image/gallery_image_page.dart';
 import 'package:jhentai/src/pages/gallery/dashboard/dashboard_page.dart';
 import 'package:jhentai/src/pages/gallery/simple/gallery_page.dart';
@@ -79,6 +80,7 @@ class Routes {
   static const String favorite = "/favorite";
   static const String watched = "/watched";
   static const String history = "/history";
+  static const String alreadyRead = "/already_read";
   static const String download = "/download";
   static const String setting = "/setting";
   static const String desktopSearch = "/desktop_search";
@@ -231,6 +233,12 @@ class Routes {
     EHPage(
       name: history,
       page: () => HistoryPage(),
+      transition: defaultTransition,
+      side: Side.left,
+    ),
+    EHPage(
+      name: alreadyRead,
+      page: () => AlreadyReadPage(showTitle: true, name: 'alreadyRead'.tr),
       transition: defaultTransition,
       side: Side.left,
     ),

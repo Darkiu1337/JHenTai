@@ -15,6 +15,10 @@ class RanklistPageLogic extends OldBasePageLogic {
   @override
   bool get useSearchConfig => false;
 
+  /// A ranking is a reference list, not a browsing feed; keep it complete.
+  @override
+  bool get hideAlreadyReadGalleries => false;
+
   Future<void> handleChangeRanklist(RanklistType newType) async {
     if (state.loadingState == LoadingState.loading) {
       return;

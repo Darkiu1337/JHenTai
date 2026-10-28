@@ -1006,6 +1006,15 @@ favnote：匹配收藏备注
       'localFavoriteRemoved': '已从本地收藏中移除',
       'noLocalFavorites': '还没有本地收藏',
       'noLocalFavoritesHint': '打开 8muses 画廊并点击心形图标即可收藏到这里。',
+      'alreadyRead': '已读',
+      'markAsAlreadyRead': '标记为已读',
+      'markRead': '标记已读',
+      'alreadyReadAction': '已读',
+      'removeFromAlreadyRead': '从已读中移除',
+      'alreadyReadAdded': '已标记为已读',
+      'alreadyReadRemoved': '已从已读中移除',
+      'noAlreadyRead': '还没有标记为已读的画廊',
+      'noAlreadyReadHint': '在画廊详情页或卡片菜单中选择“标记已读”。',
     };
   }
 }

@@ -20,6 +20,10 @@ class HistoryPageLogic extends OldBasePageLogic {
   @override
   bool get useSearchConfig => false;
 
+  /// History must keep showing everything that was read.
+  @override
+  bool get hideAlreadyReadGalleries => false;
+
   @override
   Future<List<dynamic>> getGalleriesAndPageInfoByPage(int pageIndex) async {
     log.info('Get history by page index $pageIndex');

@@ -38,6 +38,7 @@ import 'package:jhentai/src/widget/eh_rating_dialog.dart';
 import 'package:jhentai/src/widget/eh_gallery_stat_dialog.dart';
 import 'package:jhentai/src/routes/routes.dart';
 import 'package:jhentai/src/service/archive_download_service.dart';
+import 'package:jhentai/src/service/already_read_service.dart';
 import 'package:jhentai/src/service/gallery_download/gallery_images_retainer.dart';
 import 'package:jhentai/src/service/tag_translation_service.dart';
 import 'package:jhentai/src/setting/favorite_setting.dart';
@@ -132,6 +133,8 @@ class DetailsPageLogic extends GetxController with LoginRequiredMixin, Scroll2To
   void onInit() {
     super.onInit();
 
+    alreadyReadService.ensureRestored();
+
     if (Get.arguments is! DetailsPageArgument) {
       return;
     }
@@ -142,6 +145,24 @@ class DetailsPageLogic extends GetxController with LoginRequiredMixin, Scroll2To
     state.gallery = argument.gallery;
     state.galleryDetails = argument.detailsPageInfo?.galleryDetails;
     state.apikey = argument.detailsPageInfo?.apikey;
+  }
+
+  Future<void> handleTapAlreadyRead() async {
+    final detail = state.galleryDetails;
+    final gallery = state.gallery;
+
+    final model = detail != null
+        ? galleryDetail2GalleryHistoryModel(detail)
+        : gallery != null
+            ? gallery2GalleryHistoryModel(gallery)
+            : null;
+
+    if (model == null) {
+      return;
+    }
+
+    final bool added = await alreadyReadService.toggle(model);
+    toast(added ? 'alreadyReadAdded'.tr : 'alreadyReadRemoved'.tr);
   }
 
   @override

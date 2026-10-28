@@ -1007,6 +1007,15 @@ favnote：配對收藏備註
       'localFavoriteRemoved': '已從本機收藏中移除',
       'noLocalFavorites': '尚無本機收藏',
       'noLocalFavoritesHint': '開啟 8muses 畫廊並點擊愛心圖示即可收藏到此處。',
+      'alreadyRead': '已讀',
+      'markAsAlreadyRead': '標記為已讀',
+      'markRead': '標記已讀',
+      'alreadyReadAction': '已讀',
+      'removeFromAlreadyRead': '從已讀中移除',
+      'alreadyReadAdded': '已標記為已讀',
+      'alreadyReadRemoved': '已從已讀中移除',
+      'noAlreadyRead': '尚無標記為已讀的畫廊',
+      'noAlreadyReadHint': '在畫廊詳細資料頁或卡片選單中選擇「標記已讀」。',
     };
   }
 }

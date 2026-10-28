@@ -6,7 +6,9 @@ import 'package:jhentai/src/model/eight_muses_search.dart';
 import 'package:jhentai/src/model/gallery.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_logic.dart';
 import 'package:jhentai/src/routes/routes.dart';
+import 'package:jhentai/src/service/already_read_service.dart';
 import 'package:jhentai/src/service/local_favorite_service.dart';
+import 'package:jhentai/src/utils/convert_util.dart';
 import 'package:jhentai/src/utils/route_util.dart';
 import 'package:jhentai/src/utils/toast_util.dart';
 import 'package:jhentai/src/widget/eh_context_menu.dart';
@@ -198,6 +200,7 @@ class EightMusesPage extends StatelessWidget {
   /// without opening the detail page.
   void _showCardMenu(BuildContext context, Gallery gallery, {Offset? position}) {
     final bool isFavorite = localFavoriteService.contains(gallery.gid);
+    final bool isAlreadyRead = alreadyReadService.contains(gallery.gid);
 
     showEHContextMenu(
       context,
@@ -208,6 +211,11 @@ class EightMusesPage extends StatelessWidget {
           icon: Icon(isFavorite ? Icons.favorite_border : Icons.favorite, size: 18),
           onTap: () => _toggleLocalFavorite(gallery),
         ),
+        EHContextMenuAction(
+          text: isAlreadyRead ? 'removeFromAlreadyRead'.tr : 'markAsAlreadyRead'.tr,
+          icon: Icon(isAlreadyRead ? Icons.check_circle : Icons.check_circle_outline, size: 18),
+          onTap: () => _toggleAlreadyRead(gallery),
+        ),
       ],
     );
   }
@@ -215,6 +223,11 @@ class EightMusesPage extends StatelessWidget {
   Future<void> _toggleLocalFavorite(Gallery gallery) async {
     final bool added = await localFavoriteService.toggle(gallery);
     toast(added ? 'localFavoriteAdded'.tr : 'localFavoriteRemoved'.tr);
+  }
+
+  Future<void> _toggleAlreadyRead(Gallery gallery) async {
+    final bool added = await alreadyReadService.toggle(gallery2GalleryHistoryModel(gallery));
+    toast(added ? 'alreadyReadAdded'.tr : 'alreadyReadRemoved'.tr);
   }
 
   Widget _buildFilterHint(BuildContext context, EightMusesLogic logic) {

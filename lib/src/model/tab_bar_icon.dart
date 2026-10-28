@@ -11,6 +11,7 @@ enum TabBarIconNameEnum {
   download,
   eightMuses,
   setting,
+  alreadyRead,
 }
 
 class TabBarIcon {

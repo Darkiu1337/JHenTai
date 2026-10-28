@@ -22,6 +22,7 @@ import '../../model/gallery.dart';
 import '../../model/gallery_source.dart';
 import '../../network/eh_request.dart';
 import '../../routes/routes.dart';
+import '../../service/already_read_service.dart';
 import '../../service/local_block_rule_service.dart';
 import '../../service/tag_translation_service.dart';
 import '../../setting/user_setting.dart';
@@ -54,9 +55,34 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
 
   bool get autoLoadNeedLogin => false;
 
+  /// Whether galleries marked as "already read" are removed from this page.
+  ///
+  /// Off on the pages whose purpose is to list them again (Favorites, History,
+  /// Ranklist and the Already read page itself).
+  bool get hideAlreadyReadGalleries => true;
+
+  Worker? _alreadyReadWorker;
+
   @override
   Future<void> onInit() async {
     super.onInit();
+
+    alreadyReadService.ensureRestored();
+
+    /// A gallery marked as read from the details page disappears from the open
+    /// listing without needing a refresh.
+    _alreadyReadWorker = ever(alreadyReadService.galleries, (_) {
+      if (!hideAlreadyReadGalleries || state.galleries.isEmpty) {
+        return;
+      }
+
+      final int length = state.galleries.length;
+      state.galleries.removeWhere((gallery) => alreadyReadService.contains(gallery.gid));
+
+      if (state.galleries.length != length) {
+        updateSafely();
+      }
+    });
 
     if (useSearchConfig) {
       localConfigService.read(configKey: ConfigEnum.searchConfig, subConfigKey: searchConfigKey).then((searchConfigString) {
@@ -83,6 +109,12 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
     }
   }
 
+  @override
+  void onClose() {
+    _alreadyReadWorker?.dispose();
+    super.onClose();
+  }
+
   /// pull-down
   Future<void> handlePullDown() async {
     if (state.prevGid == null) {
@@ -104,7 +136,7 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
 
     GalleryPageInfo galleryPage;
     try {
-      galleryPage = await getGalleryPage();
+      galleryPage = await _getGalleryPageSkippingHidden();
     } on DioException catch (e) {
       log.error('refreshGalleryFailed'.tr, e.errorMsg);
       snack('refreshGalleryFailed'.tr, e.errorMsg ?? '', isShort: true);
@@ -190,7 +222,7 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
 
     GalleryPageInfo galleryPage;
     try {
-      galleryPage = await getGalleryPage(prevGid: state.prevGid);
+      galleryPage = await _getGalleryPageSkippingHidden(prevGid: state.prevGid);
     } on DioException catch (e) {
       log.error('getGalleriesFailed'.tr, e.errorMsg);
       snack('getGalleriesFailed'.tr, e.errorMsg ?? '', isShort: true);
@@ -239,7 +271,7 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
 
     GalleryPageInfo galleryPage;
     try {
-      galleryPage = await getGalleryPage(nextGid: state.nextGid);
+      galleryPage = await _getGalleryPageSkippingHidden(nextGid: state.nextGid);
     } on DioException catch (e) {
       log.error('getGalleriesFailed'.tr, e.errorMsg);
       snack('getGalleriesFailed'.tr, e.errorMsg ?? '', isShort: true);
@@ -416,6 +448,38 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
     );
   }
 
+  /// Wraps [getGalleryPage] so a page made only of already-read galleries is
+  /// skipped instead of leaving an empty list (and a stuck infinite scroll).
+  ///
+  /// Jumps by date (`seek`) are left untouched.
+  Future<GalleryPageInfo> _getGalleryPageSkippingHidden({String? prevGid, String? nextGid, DateTime? seek}) async {
+    GalleryPageInfo page = await getGalleryPage(prevGid: prevGid, nextGid: nextGid, seek: seek);
+
+    if (!hideAlreadyReadGalleries || seek != null) {
+      return page;
+    }
+
+    int attempts = 0;
+    while (attempts < 5 &&
+        page.galleries.isNotEmpty &&
+        page.galleries.every((gallery) => alreadyReadService.contains(gallery.gid))) {
+      if (prevGid != null) {
+        if (page.prevGid == null) {
+          break;
+        }
+        page = await getGalleryPage(prevGid: page.prevGid);
+      } else {
+        if (page.nextGid == null) {
+          break;
+        }
+        page = await getGalleryPage(nextGid: page.nextGid);
+      }
+      attempts++;
+    }
+
+    return page;
+  }
+
   Future<void> saveSearchConfig(SearchConfig searchConfig) async {
     await localConfigService.write(
       configKey: ConfigEnum.searchConfig,
@@ -432,6 +496,10 @@ abstract class BasePageLogic extends GetxController with Scroll2TopLogicMixin {
     await _translateGalleryTagsIfNeeded(galleries);
 
     List<Gallery> filteredGalleries = await _filterByBlockingRules(galleries);
+
+    if (hideAlreadyReadGalleries) {
+      filteredGalleries = filteredGalleries.where((gallery) => !alreadyReadService.contains(gallery.gid)).toList();
+    }
 
     if (preferenceSetting.preloadGalleryCover.isTrue) {
       for (Gallery gallery in galleries) {

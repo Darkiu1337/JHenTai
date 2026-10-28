@@ -1011,6 +1011,15 @@ Exemplo 2: Bloquear comentários com pontuação não superior a 10————C
       'localFavoriteRemoved': 'Removido dos favoritos locais',
       'noLocalFavorites': 'Nenhum favorito local ainda',
       'noLocalFavoritesHint': 'Abra uma galeria do 8muses e toque no coração para guardá-la aqui.',
+      'alreadyRead': 'Já lidos',
+      'markAsAlreadyRead': 'Marcar como já lido',
+      'markRead': 'Marcar lido',
+      'alreadyReadAction': 'Lido',
+      'removeFromAlreadyRead': 'Remover dos já lidos',
+      'alreadyReadAdded': 'Marcado como já lido',
+      'alreadyReadRemoved': 'Removido dos já lidos',
+      'noAlreadyRead': 'Nenhuma galeria marcada como já lida',
+      'noAlreadyReadHint': 'Use "Marcar lido" na página de detalhes ou no menu de contexto dos cards.',
     };
   }
 }

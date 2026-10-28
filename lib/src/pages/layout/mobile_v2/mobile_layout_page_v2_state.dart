@@ -11,6 +11,8 @@ import '../../../routes/routes.dart';
 import '../../../setting/preference_setting.dart';
 import '../../../widget/eight_muses_mark.dart';
 import '../../download/download_base_page.dart';
+import '../../already_read/already_read_page.dart';
+import '../../already_read/already_read_page_logic.dart';
 import '../../eight_muses/eight_muses_page.dart';
 import '../../favorite/favorite_page.dart';
 import '../../favorite/favorite_page_logic.dart';
@@ -112,6 +114,15 @@ class MobileLayoutPageV2State with DoubleTapToRefreshStateMixin {
         selectedIcon: const Icon(Icons.download),
         unselectedIcon: const Icon(Icons.download_outlined),
         page: () => const DownloadPage(),
+        shouldRender: false,
+      ),
+      TabBarIcon(
+        name: TabBarIconNameEnum.alreadyRead,
+        routeName: Routes.alreadyRead,
+        selectedIcon: const Icon(Icons.check_circle, shadows: [Shadow(blurRadius: 2)]),
+        unselectedIcon: const Icon(Icons.check_circle_outline),
+        page: () => AlreadyReadPage(showMenuButton: true, showTitle: true, name: 'alreadyRead'.tr),
+        scrollController: () => Get.find<AlreadyReadPageLogic>().scroll2TopState.scrollController,
         shouldRender: false,
       ),
       TabBarIcon(

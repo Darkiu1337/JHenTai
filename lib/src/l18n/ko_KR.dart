@@ -1000,6 +1000,15 @@ Example 2: Block comments with a score not exceeding 10————Comment Score
       'localFavoriteRemoved': '로컬 즐겨찾기에서 제거됨',
       'noLocalFavorites': '아직 로컬 즐겨찾기가 없습니다',
       'noLocalFavoritesHint': '8muses 갤러리를 열고 하트를 눌러 여기에 저장하세요.',
+      'alreadyRead': '이미 읽음',
+      'markAsAlreadyRead': '이미 읽음으로 표시',
+      'markRead': '읽음 표시',
+      'alreadyReadAction': '읽음',
+      'removeFromAlreadyRead': '이미 읽음에서 제거',
+      'alreadyReadAdded': '이미 읽음으로 표시됨',
+      'alreadyReadRemoved': '이미 읽음에서 제거됨',
+      'noAlreadyRead': '이미 읽음으로 표시된 갤러리가 없습니다',
+      'noAlreadyReadHint': '갤러리 상세 페이지나 카드 메뉴에서 "읽음 표시"를 사용하세요.',
     };
   }
 }

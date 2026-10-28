@@ -1011,6 +1011,15 @@ Example 2: Block comments with a score not exceeding 10————Comment Score
       'localFavoriteRemoved': 'Removed from local favorites',
       'noLocalFavorites': 'No local favorites yet',
       'noLocalFavoritesHint': 'Open an 8muses gallery and tap the heart to keep it here.',
+      'alreadyRead': 'Already read',
+      'markAsAlreadyRead': 'Mark as already read',
+      'markRead': 'Mark read',
+      'alreadyReadAction': 'Read',
+      'removeFromAlreadyRead': 'Remove from already read',
+      'alreadyReadAdded': 'Marked as already read',
+      'alreadyReadRemoved': 'Removed from already read',
+      'noAlreadyRead': 'No galleries marked as already read',
+      'noAlreadyReadHint': 'Use "Mark read" on a gallery detail page or in the card context menu.',
     };
   }
 }

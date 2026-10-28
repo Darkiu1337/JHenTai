@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jhentai/src/extension/list_extension.dart';
 import 'package:jhentai/src/pages/download/download_base_page.dart';
+import 'package:jhentai/src/pages/already_read/already_read_page.dart';
 import 'package:jhentai/src/pages/eight_muses/eight_muses_page.dart';
 import 'package:jhentai/src/pages/gallery/simple/gallery_page_logic.dart';
 import 'package:jhentai/src/pages/history/history_page.dart';
@@ -17,6 +18,7 @@ import '../../../mixin/double_tap_to_refresh_state_mixin.dart';
 import '../../../model/tab_bar_icon.dart';
 import '../../favorite/favorite_page.dart';
 import '../../favorite/favorite_page_logic.dart';
+import '../../already_read/already_read_page_logic.dart';
 import '../../history/history_page_logic.dart';
 import '../../popular/popular_page_logic.dart';
 import '../../ranklist/ranklist_page.dart';
@@ -116,6 +118,15 @@ class DesktopLayoutPageState with DoubleTapToRefreshStateMixin {
         selectedIcon: const EightMusesMark(size: 22),
         unselectedIcon: const Opacity(opacity: 0.65, child: EightMusesMark(size: 22)),
         page: () => const EightMusesPage(),
+        shouldRender: false,
+      ),
+      TabBarIcon(
+        name: TabBarIconNameEnum.alreadyRead,
+        routeName: Routes.alreadyRead,
+        selectedIcon: const Icon(Icons.check_circle, shadows: [Shadow(blurRadius: 2)]),
+        unselectedIcon: const Icon(Icons.check_circle_outline),
+        page: () => AlreadyReadPage(showTitle: true, name: 'alreadyRead'.tr),
+        scrollController: () => Get.find<AlreadyReadPageLogic>().state.scrollController,
         shouldRender: false,
       ),
       TabBarIcon(
