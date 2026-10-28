@@ -102,7 +102,7 @@ class EightMusesParser {
       }
 
       final String raw = genresMatch.group(1) ?? '';
-      final List<String> genres = RegExp(r'\\?"((?:[^"\\]|\\.)*)\\?"')
+      final List<String> genres = RegExp(r'\\?"([^"\\]+)\\?"')
           .allMatches(raw)
           .map((Match m) => unescapeHtml((m.group(1) ?? '').replaceAll(r'\"', '"')).trim())
           .where((String e) => e.isNotEmpty)
@@ -297,7 +297,7 @@ class EightMusesParser {
       return null;
     }
 
-    final Match? match = RegExp(r'\\"' + key + r'\\":\\"((?:[^"\\]|\\.)*)\\"').firstMatch(segment);
+    final Match? match = RegExp(r'\\"' + key + r'\\":\\"((?:[^"\\]|\\.)*?)\\"').firstMatch(segment);
     final String? value = match?.group(1);
     if (value == null) {
       return null;

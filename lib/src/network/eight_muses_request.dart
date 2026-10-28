@@ -47,12 +47,6 @@ class EightMusesRequest {
     return _requestGalleryPage(path);
   }
 
-  Future<List<Gallery>> search({required String keyword, required int page}) async {
-    final String query = Uri.encodeQueryComponent(keyword.trim());
-    final String path = page <= 1 ? '/search?q=$query' : '/search/page/$page?q=$query';
-    return _requestGalleryPage(path);
-  }
-
   Future<List<Gallery>> search({required EightMusesSearchConfig config, required int page}) async {
     final Map<String, String> params = <String, String>{
       if (config.hasKeyword) 'q': config.keyword.trim(),
