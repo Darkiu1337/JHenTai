@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -9,14 +8,15 @@ import 'package:jhentai/src/pages/setting/read/tap_zone/setting_tap_zone_page.da
 import 'package:jhentai/src/setting/preference_setting.dart';
 import 'package:jhentai/src/setting/read_setting.dart';
 import 'package:jhentai/src/setting/style_setting.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../routes/routes.dart';
 import '../../../service/external_viewer_service.dart';
-import '../../../service/log.dart';
 import '../../../utils/route_util.dart';
 import '../../../utils/text_input_formatter.dart';
 import '../../../utils/toast_util.dart';
 import '../../../widget/eh_alert_dialog.dart';
+import '../../../widget/image_viewer_select_dialog.dart';
 import '../../home_page.dart';
 
 class SettingReadPage extends StatelessWidget {
@@ -58,7 +58,7 @@ class SettingReadPage extends StatelessWidget {
                   _buildEnableImageMaxKilobytes().center(),
                   if (readSetting.enableMaxImageKilobyte.isTrue) _buildImageMaxKilobytes(context).fadeIn(const Key('imageMaxKilobytes')).center(),
                   if (GetPlatform.isDesktop) _buildUseThirdPartyViewer().center(),
-                  if (GetPlatform.isDesktop) _buildThirdPartyViewerPath().center(),
+                  if (GetPlatform.isDesktop) _buildThirdPartyViewerPath(context).center(),
                   if (GetPlatform.isDesktop && (readSetting.thirdPartyViewerPath.value?.trim().isNotEmpty ?? false)) ...[
                     _buildExternalViewerStreamMode().center(),
                     _buildExternalViewerArgs(context).center(),
@@ -582,25 +582,36 @@ class SettingReadPage extends StatelessWidget {
     );
   }
 
-  Widget _buildThirdPartyViewerPath() {
+  Widget _buildThirdPartyViewerPath(BuildContext context) {
+    final String? configuredPath = readSetting.thirdPartyViewerPath.value;
+    final String? configuredName = readSetting.thirdPartyViewerName.value;
+    final String display = configuredName != null && configuredName.trim().isNotEmpty
+        ? configuredName
+        : (configuredPath == null || configuredPath.trim().isEmpty ? '' : p.basenameWithoutExtension(configuredPath));
+
     return ListTile(
       title: Text('thirdPartyViewerPath'.tr),
-      subtitle: Text(readSetting.thirdPartyViewerPath.value ?? ''),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (display.isNotEmpty) Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text('thirdPartyViewerPathHint'.tr, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        FilePickerResult? result;
-        try {
-          result = await FilePicker.platform.pickFiles();
-        } on Exception catch (e) {
-          log.error('Pick 3-rd party viewer failed', e);
-          log.uploadError(e);
-        }
-
-        if (result == null || result.files.single.path == null) {
+        final ImageViewerSelection? selection = await Get.dialog<ImageViewerSelection>(
+          ImageViewerSelectDialog(currentPath: readSetting.thirdPartyViewerPath.value),
+        );
+        if (selection == null) {
           return;
         }
 
-        readSetting.saveThirdPartyViewerPath(result.files.single.path!);
+        if (selection.isEmpty) {
+          await readSetting.saveThirdPartyViewer(path: null, name: null);
+        } else {
+          await readSetting.saveThirdPartyViewer(path: selection.path, name: selection.name);
+        }
       },
     );
   }

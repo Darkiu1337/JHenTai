@@ -46,6 +46,9 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   RxBool useThirdPartyViewer = false.obs;
   RxnString thirdPartyViewerPath = RxnString();
 
+  /// Friendly name of the selected viewer (shown instead of the full path).
+  RxnString thirdPartyViewerName = RxnString();
+
   /// How pages are handed to the external image viewer.
   Rx<ExternalViewerStreamMode> externalViewerStreamMode = ExternalViewerStreamMode.auto.obs;
 
@@ -169,6 +172,7 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
     _cachedTapZoneConfig = null;
     useThirdPartyViewer.value = map['useThirdPartyViewer'] ?? useThirdPartyViewer.value;
     thirdPartyViewerPath.value = map['thirdPartyViewerPath'];
+    thirdPartyViewerName.value = map['thirdPartyViewerName'];
     externalViewerStreamMode.value = ExternalViewerStreamMode.values[map['externalViewerStreamMode'] ?? ExternalViewerStreamMode.auto.index];
     externalViewerArgs.value = map['externalViewerArgs'];
     turnPageMode.value = TurnPageMode.values[map['turnPageMode']];
@@ -218,6 +222,7 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
       'tapZoneConfig': tapZoneConfigJson.value,
       'useThirdPartyViewer': useThirdPartyViewer.value,
       'thirdPartyViewerPath': thirdPartyViewerPath.value,
+      'thirdPartyViewerName': thirdPartyViewerName.value,
       'externalViewerStreamMode': externalViewerStreamMode.value.index,
       'externalViewerArgs': externalViewerArgs.value,
       'turnPageMode': turnPageMode.value.index,
@@ -373,6 +378,14 @@ class ReadSetting with JHLifeCircleBeanWithConfigStorage implements JHLifeCircle
   Future<void> saveThirdPartyViewerPath(String? value) async {
     log.debug('saveThirdPartyViewerPath:$value');
     thirdPartyViewerPath.value = value;
+    await saveBeanConfig();
+  }
+
+  /// Saves the selected viewer path and its friendly name together.
+  Future<void> saveThirdPartyViewer({String? path, String? name}) async {
+    log.debug('saveThirdPartyViewer:$path ($name)');
+    thirdPartyViewerPath.value = path;
+    thirdPartyViewerName.value = name;
     await saveBeanConfig();
   }
 
